@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}{{ category.name }} - Nhà sách Gang Thép{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('site.home') }}">Trang chủ</a></li>
+            <li class="breadcrumb-item active">{{ category.name }}</li>
+        </ol>
+    </nav>
+
+    <!-- Category Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1>{{ category.name }}</h1>
+            {% if category.intro %}
+            <p class="category-description">{{ category.intro }}</p>
+            {% endif %}
+            <p class="text-muted">{{ total }} sản phẩm</p>
+        </div>
+    </div>
+
+    <!-- Filters & Search -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <form method="GET" class="row g-3">
+                <!-- Search -->
+                <div class="col-md-4">
+                    <input type="text" class="form-control" name="q" value="{{ q }}" 
+                           placeholder="Tìm kiếm...">
+                </div>
+                
+                <!-- Price filters -->
+                <div class="col-md-3">
+                    <input type="number" class="form-control" name="price_min" value="{{ price_min }}" 
+                           placeholder="Giá từ">
+                </div>
+                <div class="col-md-3">
+                    <input type="number" class="form-control" name="price_max" value="{{ price_max }}" 
+                           placeholder="Giá đến">
+                </div>
+                
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Sort -->
+        <div class="col-md-4">
+            <form method="GET" id="sortForm">
+                <input type="hidden" name="q" value="{{ q }}">
+                <input type="hidden" name="price_min" value="{{ price_min }}">
+                <input type="hidden" name="price_max" value="{{ price_max }}">
+                
+                <select name="sort" class="form-select" onchange="document.getElementById('sortForm').submit()">
+                    <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Mới nhất</option>
+                    <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Giá tăng dần</option>
+                    <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Giá giảm dần</option>
+                </select>
+            </form>
+        </div>
+    </div>
+
+    <!-- Products Grid -->
+    <div class="row">
+        {% for product in items %}
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            {% include '_partials/product_card.html' %}
+        </div>
+        {% else %}
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                <h4>Không tìm thấy sản phẩm</h4>
+                <p>Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm</p>
+                <a href="{{ url_for('site.category', slug=category.slug) }}" class="btn btn-primary">
+                    Xem tất cả sản phẩm
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if items %}
+        {% include '_partials/pagination.html' %}
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Add to cart functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const addToCartBtns = document.querySelectorAll('.add-to-cart-btn');
+    
+    addToCartBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const productId = this.dataset.productId;
+            
+            fetch('/cart/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    product_id: productId,
+                    qty: 1
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update cart count in navbar
+                    const cartBadge = document.querySelector('.navbar .badge');
+                    if (cartBadge) {
+                        cartBadge.textContent = data.cart_count;
+                    } else if (data.cart_count > 0) {
+                        const cartLink = document.querySelector('.navbar a[href*="cart"]');
+                        cartLink.innerHTML += ` <span class="badge bg-danger">${data.cart_count}</span>`;
+                    }
+                    
+                    // Show success message
+                    alert(data.message);
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Có lỗi xảy ra');
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

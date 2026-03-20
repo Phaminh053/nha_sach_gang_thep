@@ -1,0 +1,104 @@
+{% if total > page_size %}
+<!-- Set up variables for pagination links -->
+{% set view_args = request.view_args %}
+
+<nav aria-label="Phân trang">
+    <ul class="pagination justify-content-center">
+        <!-- Previous -->
+        {% if page > 1 %}
+            <li class="page-item">
+                {% if view_args.slug %}
+                    <a class="page-link" href="{{ url_for(request.endpoint, slug=view_args.slug, page=page-1, q=request.args.get('q', ''), price_min=request.args.get('price_min', ''), price_max=request.args.get('price_max', ''), sort=request.args.get('sort', '')) }}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                {% else %}
+                    <a class="page-link" href="{{ url_for(request.endpoint, page=page-1, q=request.args.get('q', ''), price_min=request.args.get('price_min', ''), price_max=request.args.get('price_max', ''), sort=request.args.get('sort', '')) }}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                {% endif %}
+            </li>
+        {% else %}
+            <li class="page-item disabled">
+                <span class="page-link"><i class="bi bi-chevron-left"></i></span>
+            </li>
+        {% endif %}
+        
+        <!-- Page numbers -->
+        {% set total_pages = (total // page_size) + (1 if total % page_size else 0) %}
+        {% set start_page = [1, page - 2]|max %}
+        {% set end_page = [total_pages, page + 2]|min %}
+        
+        {% if start_page > 1 %}
+            <li class="page-item">
+                {% if view_args.slug %}
+                    <a class="page-link" href="{{ url_for(request.endpoint, slug=view_args.slug, page=1, q=request.args.get('q', ''), price_min=request.args.get('price_min', ''), price_max=request.args.get('price_max', ''), sort=request.args.get('sort', '')) }}">1</a>
+                {% else %}
+                    <a class="page-link" href="{{ url_for(request.endpoint, page=1, q=request.args.get('q', ''), price_min=request.args.get('price_min', ''), price_max=request.args.get('price_max', ''), sort=request.args.get('sort', '')) }}">1</a>
+                {% endif %}
+            </li>
+            {% if start_page > 2 %}
+                <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                </li>
+            {% endif %}
+        {% endif %}
+        
+        {% for p in range(start_page, end_page + 1) %}
+            {% if p == page %}
+                <li class="page-item active">
+                    <span class="page-link">{{ p }}</span>
+                </li>
+            {% else %}
+                <li class="page-item">
+                    {% if view_args.slug %}
+                        <a class="page-link" href="{{ url_for(request.endpoint, slug=view_args.slug, page=p, q=request.args.get('q', ''), price_min=request.args.get('price_min', ''), price_max=request.args.get('price_max', ''), sort=request.args.get('sort', '')) }}">{{ p }}</a>
+                    {% else %}
+                        <a class="page-link" href="{{ url_for(request.endpoint, page=p, q=request.args.get('q', ''), price_min=request.args.get('price_min', ''), price_max=request.args.get('price_max', ''), sort=request.args.get('sort', '')) }}">{{ p }}</a>
+                    {% endif %}
+                </li>
+            {% endif %}
+        {% endfor %}
+        
+        {% if end_page < total_pages %}
+            {% if end_page < total_pages - 1 %}
+                <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                </li>
+            {% endif %}
+            <li class="page-item">
+                {% if view_args.slug %}
+                    <a class="page-link" href="{{ url_for(request.endpoint, slug=view_args.slug, page=total_pages, q=request.args.get('q', ''), price_min=request.args.get('price_min', ''), price_max=request.args.get('price_max', ''), sort=request.args.get('sort', '')) }}">{{ total_pages }}</a>
+                {% else %}
+                    <a class="page-link" href="{{ url_for(request.endpoint, page=total_pages, q=request.args.get('q', ''), price_min=request.args.get('price_min', ''), price_max=request.args.get('price_max', ''), sort=request.args.get('sort', '')) }}">{{ total_pages }}</a>
+                {% endif %}
+            </li>
+        {% endif %}
+        
+        <!-- Next -->
+        {% if page < total_pages %}
+            <li class="page-item">
+                {% if view_args.slug %}
+                    <a class="page-link" href="{{ url_for(request.endpoint, slug=view_args.slug, page=page+1, q=request.args.get('q', ''), price_min=request.args.get('price_min', ''), price_max=request.args.get('price_max', ''), sort=request.args.get('sort', '')) }}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                {% else %}
+                    <a class="page-link" href="{{ url_for(request.endpoint, page=page+1, q=request.args.get('q', ''), price_min=request.args.get('price_min', ''), price_max=request.args.get('price_max', ''), sort=request.args.get('sort', '')) }}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                {% endif %}
+            </li>
+        {% else %}
+            <li class="page-item disabled">
+                <span class="page-link"><i class="bi bi-chevron-right"></i></span>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+
+<div class="text-center text-muted mt-2">
+    <small>
+        Hiển thị {{ ((page-1) * page_size + 1) }} - {{ [page * page_size, total]|min }} 
+        trên tổng {{ total }} sản phẩm
+    </small>
+</div>
+{% endif %}

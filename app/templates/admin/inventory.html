@@ -1,0 +1,419 @@
+{% extends "admin/base.html" %}
+
+{% block page_title %}Quản lý kho hàng{% endblock %}
+{% block page_subtitle %}Kiểm tra và cập nhật tồn kho{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-5">
+        <div class="input-group">
+            <input type="text" class="form-control" placeholder="Tìm kiếm tên sách, SKU..." id="searchInput">
+            <button class="btn btn-outline-secondary" type="button" onclick="loadInventoryData(1)">
+                <i class="fas fa-search"></i>
+            </button>
+        </div>
+    </div>
+    <div class="col-md-7 text-end">
+        <button class="btn btn-outline-primary" onclick="loadInventoryData(1)">
+            <i class="fas fa-sync-alt"></i> Làm mới API
+        </button>
+    </div>
+</div>
+
+<div class="card table-custom">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0 text-white">
+            <i class="fas fa-boxes"></i> Danh sách Tồn kho
+        </h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Hình ảnh</th>
+                        <th>Tên sách</th>
+                        <th>Giá bán</th>
+                        <th>Tồn kho</th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody id="inventoryTableBody">
+                    <tr>
+                        <td colspan="6" class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Đang tải dữ liệu kho...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="card-footer" id="paginationContainer" style="display: none;">
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center mb-0" id="paginationList">
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<!-- Inventory Management Modal -->
+<div class="modal fade" id="inventoryModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Lịch sử Kho: <span id="invProductName" class="text-primary"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h6 class="text-muted mb-1">Tồn kho hiện tại</h6>
+                                <h3 class="mb-0 text-success" id="invCurrentStock">0</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <ul class="nav nav-tabs mb-3" id="invTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="history-tab" data-bs-toggle="tab" data-bs-target="#history"
+                            type="button" role="tab">Lịch sử giao dịch</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="add-tx-tab" data-bs-toggle="tab" data-bs-target="#add-tx"
+                            type="button" role="tab">Thêm biến động</button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="invTabContent">
+                    <div class="tab-pane fade show active" id="history" role="tabpanel">
+                        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                            <table class="table table-sm table-hover">
+                                <thead class="table-light sticky-top">
+                                    <tr>
+                                        <th>Thời gian</th>
+                                        <th>Loại</th>
+                                        <th>Số lượng</th>
+                                        <th>Tồn sau GD</th>
+                                        <th>Nguồn</th>
+                                        <th>Ghi chú</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="invHistoryBody">
+                                    <tr>
+                                        <td colspan="6" class="text-center">Đang tải...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="add-tx" role="tabpanel">
+                        <form id="inventoryForm">
+                            <input type="hidden" id="invProductId">
+                            <div class="mb-3">
+                                <label class="form-label">Loại giao dịch <span class="text-danger">*</span></label>
+                                <select class="form-select" id="invTxType" required>
+                                    <option value="IN">Nhập hàng (Cộng thêm vào tồn kho)</option>
+                                    <option value="ADJUST">Kiểm kê / Điều chỉnh (Ghi đè số tồn kho hiện tại)</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label" id="invQtyLabel">Số lượng nhập thêm <span
+                                        class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="invQty" min="0" required>
+                                <div class="form-text" id="invQtyHelp">Số lượng này sẽ được cộng thêm vào tồn kho hiện
+                                    tại.</div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Ghi chú</label>
+                                <textarea class="form-control" id="invNote" rows="2"
+                                    placeholder="Lý do nhập kho/điều chỉnh..."></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary" id="btnSubmitInvForm"><i
+                                    class="fas fa-save"></i> Lưu giao dịch</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let currentPage = 1;
+
+    // Load inventory logic with AJAX API call
+    function loadInventoryData(page = 1) {
+        currentPage = page;
+        const search = document.getElementById('searchInput').value;
+        const queryStr = search ? `&query=${encodeURIComponent(search)}` : '';
+
+        document.getElementById('inventoryTableBody').innerHTML = `
+        <tr><td colspan="6" class="text-center py-4">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-2 text-muted">Đang tải dữ liệu...</p>
+        </td></tr>
+    `;
+
+        fetch(`/api/v1/admin/inventory?page=${page}&per_page=20${queryStr}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    renderInventoryTable(data.data.items);
+                    renderPagination(data.data);
+                } else {
+                    document.getElementById('inventoryTableBody').innerHTML = `
+                    <tr><td colspan="6" class="text-center py-4 text-danger">Lỗi: ${data.message}</td></tr>
+                `;
+                }
+            })
+            .catch(err => {
+                document.getElementById('inventoryTableBody').innerHTML = `
+                <tr><td colspan="6" class="text-center py-4 text-danger">Lỗi kết nối máy chủ API</td></tr>
+            `;
+            });
+    }
+
+    function renderInventoryTable(items) {
+        const tbody = document.getElementById('inventoryTableBody');
+        if (items.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">Không tìm thấy sách nào.</td></tr>';
+            return;
+        }
+
+        let html = '';
+        items.forEach(product => {
+            const qty = product.stock.qty_on_hand;
+
+            let stockBadge = '';
+            let statusBadge = '';
+
+            if (qty > 10) {
+                stockBadge = `<span class="badge bg-success fs-6">${qty}</span>`;
+                statusBadge = `<span class="text-success"><i class="fas fa-check-circle"></i> Đủ hàng</span>`;
+            } else if (qty > 0) {
+                stockBadge = `<span class="badge bg-warning text-dark fs-6">${qty}</span>`;
+                statusBadge = `<span class="text-warning"><i class="fas fa-exclamation-circle"></i> Sắp hết</span>`;
+            } else {
+                stockBadge = `<span class="badge bg-danger fs-6">${qty}</span>`;
+                statusBadge = `<span class="text-danger"><i class="fas fa-times-circle"></i> Hết hàng</span>`;
+            }
+
+            const imgHtml = product.image_url
+                ? `<img src="${product.image_url}" alt="${product.name}" class="img-thumbnail" style="width: 50px; height: 50px; object-fit: cover;">`
+                : `<div class="bg-light d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; border-radius: 5px;"><i class="fas fa-image text-muted"></i></div>`;
+
+            html += `
+            <tr>
+                <td>${imgHtml}</td>
+                <td>
+                    <strong>${product.name}</strong><br>
+                    <small class="text-muted">Mã/SKU: ${product.sku || product.slug || 'N/A'}</small>
+                </td>
+                <td>${product.price.toLocaleString('vi-VN')}đ</td>
+                <td>${stockBadge}</td>
+                <td>${product.is_active ? statusBadge : '<span class="text-muted">Ngừng kinh doanh</span>'}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-info" 
+                            onclick="manageInventory(${product.id}, \`${product.name.replace(/`/g, "'")}\`)"
+                            title="Quản lý tồn kho chi tiết">
+                        <i class="fas fa-history"></i> Lịch sử / Điều chỉnh
+                    </button>
+                </td>
+            </tr>
+        `;
+        });
+        tbody.innerHTML = html;
+    }
+
+    function renderPagination(data) {
+        const container = document.getElementById('paginationContainer');
+        const ul = document.getElementById('paginationList');
+
+        if (data.pages <= 1) {
+            container.style.display = 'none';
+            return;
+        }
+
+        container.style.display = 'block';
+        let html = '';
+
+        // Prev
+        if (data.current_page > 1) {
+            html += `<li class="page-item"><a class="page-link" href="#" onclick="loadInventoryData(${data.current_page - 1}); return false;"><i class="fas fa-chevron-left"></i></a></li>`;
+        }
+
+        // Pages
+        const start = Math.max(1, data.current_page - 2);
+        const end = Math.min(data.pages, data.current_page + 2);
+
+        for (let p = start; p <= end; p++) {
+            const active = p === data.current_page ? 'active' : '';
+            html += `<li class="page-item ${active}"><a class="page-link" href="#" onclick="loadInventoryData(${p}); return false;">${p}</a></li>`;
+        }
+
+        // Next
+        if (data.current_page < data.pages) {
+            html += `<li class="page-item"><a class="page-link" href="#" onclick="loadInventoryData(${data.current_page + 1}); return false;"><i class="fas fa-chevron-right"></i></a></li>`;
+        }
+
+        ul.innerHTML = html;
+    }
+
+    // Enter key search
+    document.getElementById('searchInput').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            loadInventoryData(1);
+        }
+    });
+
+
+    // Initialization
+    document.addEventListener('DOMContentLoaded', () => {
+        loadInventoryData(1);
+    });
+
+
+    // MODAL LOGIC (Copied & adapted from products.html)
+    function manageInventory(productId, productName) {
+        document.getElementById('invProductName').textContent = productName;
+        document.getElementById('invProductId').value = productId;
+
+        // Reset tabs
+        const triggerFirstTabEl = document.querySelector('#invTabs button[data-bs-target="#history"]');
+        bootstrap.Tab.getInstance(triggerFirstTabEl)?.show() || new bootstrap.Tab(triggerFirstTabEl).show();
+
+        // Reset form
+        document.getElementById('inventoryForm').reset();
+        document.getElementById('invQty').value = '';
+
+        const modal = new bootstrap.Modal(document.getElementById('inventoryModal'));
+        modal.show();
+
+        loadInventoryHistory(productId);
+    }
+
+    function loadInventoryHistory(productId) {
+        const tbody = document.getElementById('invHistoryBody');
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center"><div class="spinner-border spinner-border-sm text-primary"></div> Đang tải...</td></tr>';
+
+        fetch(`/api/v1/admin/inventory/${productId}/transactions`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    document.getElementById('invCurrentStock').textContent = data.data.product.current_stock;
+
+                    const txs = data.data.transactions;
+                    if (txs.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Chưa có biến động kho nào</td></tr>';
+                        return;
+                    }
+
+                    let html = '';
+                    txs.forEach(tx => {
+                        const date = new Date(tx.created_at).toLocaleString('vi-VN');
+                        let typeBadge = '';
+                        let qtyClass = '';
+                        let qtyPrefix = '';
+
+                        if (tx.transaction_type === 'IN') {
+                            typeBadge = '<span class="badge bg-success">Nhập kho</span>';
+                            qtyClass = 'text-success';
+                            qtyPrefix = '+';
+                        } else if (tx.transaction_type === 'OUT') {
+                            typeBadge = '<span class="badge bg-danger">Xuất kho</span>';
+                            qtyClass = 'text-danger';
+                            qtyPrefix = ''; // negative from DB
+                        } else if (tx.transaction_type === 'ADJUST') {
+                            typeBadge = '<span class="badge bg-warning text-dark">Điều chỉnh</span>';
+                            qtyClass = tx.quantity_changed >= 0 ? 'text-success' : 'text-danger';
+                            qtyPrefix = tx.quantity_changed >= 0 ? '+' : '';
+                        }
+
+                        html += `
+                        <tr>
+                            <td>${date}</td>
+                            <td>${typeBadge}</td>
+                            <td class="${qtyClass}"><strong>${qtyPrefix}${tx.quantity_changed}</strong></td>
+                            <td>${tx.qty_after_transaction}</td>
+                            <td><small>${tx.reference_type} ${tx.reference_id ? '#' + tx.reference_id : ''}</small></td>
+                            <td><small>${tx.note || ''}</small></td>
+                        </tr>
+                    `;
+                    });
+                    tbody.innerHTML = html;
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">Lỗi: ${data.message}</td></tr>`;
+                }
+            })
+            .catch(err => {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">Lỗi kết nối</td></tr>`;
+            });
+    }
+
+    document.getElementById('invTxType').addEventListener('change', function (e) {
+        const isAdjust = e.target.value === 'ADJUST';
+        document.getElementById('invQtyLabel').innerHTML = isAdjust ? 'Số lượng tồn kho thực tế <span class="text-danger">*</span>' : 'Số lượng nhập thêm <span class="text-danger">*</span>';
+        document.getElementById('invQtyHelp').textContent = isAdjust ? 'Hệ thống sẽ cập nhật số tồn kho hiện tại của sản phẩm bằng chính số này.' : 'Số lượng này sẽ được cộng thêm vào tồn kho hiện tại.';
+    });
+
+    document.getElementById('inventoryForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        const btn = document.getElementById('btnSubmitInvForm');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang lưu...';
+
+        const productId = document.getElementById('invProductId').value;
+        const isAdjust = document.getElementById('invTxType').value === 'ADJUST';
+
+        const payload = {
+            product_id: parseInt(productId),
+            transaction_type: document.getElementById('invTxType').value,
+            quantity: parseInt(document.getElementById('invQty').value),
+            note: document.getElementById('invNote').value
+        };
+
+        fetch('/api/v1/admin/inventory/transaction', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload)
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Refresh modal data
+                    loadInventoryHistory(productId);
+
+                    // Refresh the underlying main page table so stock numbers update!
+                    loadInventoryData(currentPage);
+
+                    // Reset form
+                    this.reset();
+                    // Switch to History tab
+                    const triggerFirstTabEl = document.querySelector('#invTabs button[data-bs-target="#history"]');
+                    new bootstrap.Tab(triggerFirstTabEl).show();
+
+                } else {
+                    alert('Lỗi: ' + (data.message || data.error));
+                }
+            })
+            .catch(err => alert('Lỗi kết nối'))
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save"></i> Lưu giao dịch';
+            });
+    });
+</script>
+{% endblock %}

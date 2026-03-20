@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Nhà sách Gang Thép{% endblock %}</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23dc2626'%3E%3Cpath d='M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z'/%3E%3Cpath d='M2 4h20v16H2V4zm2 2v12h16V6H4z'/%3E%3Cpath d='M6 8h12v1H6zm0 3h12v1H6zm0 3h8v1H6z'/%3E%3C/svg%3E">
+    <link rel="shortcut icon" type="image/svg+xml"
+        href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23dc2626'%3E%3Cpath d='M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z'/%3E%3Cpath d='M2 4h20v16H2V4zm2 2v12h16V6H4z'/%3E%3Cpath d='M6 8h12v1H6zm0 3h12v1H6zm0 3h8v1H6z'/%3E%3C/svg%3E">
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Font Awesome CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link href="{{ url_for('static', filename='css/custom.css') }}" rel="stylesheet">
+
+    {% block extra_head %}{% endblock %}
+</head>
+
+<body>
+    {% include '_partials/navbar.html' %}
+
+    {% include '_partials/flash.html' %}
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    {% include '_partials/footer.html' %}
+
+    <!-- Chatbox Component -->
+    {% include '_partials/chatbox.html' %}
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Auth Manager -->
+    <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+
+    <!-- Toast Notification System -->
+    <script>
+        // Toast notification system
+        function showToast(type, message) {
+            // Create toast container if it doesn't exist
+            let container = document.querySelector('.toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.className = 'toast-container';
+                document.body.appendChild(container);
+            }
+
+            // Create toast element
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+
+            // Set icon based on type
+            const icons = {
+                success: 'fas fa-check-circle',
+                error: 'fas fa-exclamation-circle',
+                warning: 'fas fa-exclamation-triangle',
+                info: 'fas fa-info-circle'
+            };
+
+            toast.innerHTML = `
+            <div class="toast-content">
+                <i class="toast-icon ${icons[type]}"></i>
+                <div class="toast-message">${message}</div>
+                <button class="toast-close" onclick="closeToast(this)">&times;</button>
+            </div>
+        `;
+
+            // Add to container
+            container.appendChild(toast);
+
+            // Auto remove after delay
+            const delay = type === 'success' ? 4000 : 6000;
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    closeToast(toast.querySelector('.toast-close'));
+                }
+            }, delay);
+        }
+
+        function closeToast(button) {
+            const toast = button.closest('.toast');
+            toast.classList.add('fade-out');
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.remove();
+                }
+            }, 300);
+        }
+    </script>
+
+    <!-- User Session Management -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            {% if session.user_id %}
+            // Store user session info for chatbox and other components
+            try {
+                var userId = {{ session.user_id| tojson | safe
+            }};
+        var userName = {{ (session.user_name or "")| tojson | safe }};
+        var userEmail = {{ (session.user_email or "")| tojson | safe }};
+        var userFullName = {{ (session.user_full_name or "")| tojson | safe }};
+        var userPhone = {{ (session.user_phone or "")| tojson | safe }};
+        var userRole = {{ (session.user_role or "")| tojson | safe }};
+
+        sessionStorage.setItem('user_id', userId);
+        sessionStorage.setItem('user_name', userName);
+        sessionStorage.setItem('user_email', userEmail);
+        sessionStorage.setItem('user_full_name', userFullName);
+        sessionStorage.setItem('user_phone', userPhone);
+        sessionStorage.setItem('user_role', userRole);
+
+        // Mark body as logged in for easy detection
+        document.body.classList.add('user-logged-in');
+        document.body.setAttribute('data-user-id', userId);
+        document.body.setAttribute('data-user-name', userName);
+
+        console.log('User session restored:', {
+            id: userId,
+            name: userName,
+            email: userEmail
+        });
+            } catch (error) {
+            console.error('Error storing session data:', error);
+        }
+        {% else %}
+        // Clear user session info if not logged in
+        try {
+            sessionStorage.removeItem('user_id');
+            sessionStorage.removeItem('user_name');
+            sessionStorage.removeItem('user_email');
+            sessionStorage.removeItem('user_full_name');
+            sessionStorage.removeItem('user_phone');
+            sessionStorage.removeItem('user_role');
+
+            document.body.classList.remove('user-logged-in');
+            document.body.removeAttribute('data-user-id');
+            document.body.removeAttribute('data-user-name');
+
+            console.log('User session cleared');
+        } catch (error) {
+            console.error('Error clearing session data:', error);
+        }
+        {% endif %}
+        });
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

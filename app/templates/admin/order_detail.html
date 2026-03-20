@@ -1,0 +1,387 @@
+{% extends "admin/base.html" %}
+
+{% block page_title %}Chi tiết đơn hàng{% endblock %}
+{% block page_subtitle %}{{ order.order_code }}{% endblock %}
+
+{# Import order helpers for consistent status display #}
+{% from 'admin/_order_helpers.html' import render_order_status, render_payment_status, render_payment_method %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <!-- Order Information -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle"></i> Thông tin đơn hàng
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>Mã đơn hàng:</strong></td>
+                                <td><span class="badge bg-primary">{{ order.order_code }}</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Khách hàng:</strong></td>
+                                <td>{{ order.customer_name }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Số điện thoại:</strong></td>
+                                <td>{{ order.phone }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Địa chỉ:</strong></td>
+                                <td>{{ order.address }}</td>
+                            </tr>
+                            {% if order.ward or order.district or order.province %}
+                            <tr>
+                                <td><strong>Khu vực:</strong></td>
+                                <td>
+                                    {% if order.ward %}{{ order.ward }}, {% endif %}
+                                    {% if order.district %}{{ order.district }}, {% endif %}
+                                    {% if order.province %}{{ order.province }}{% endif %}
+                                </td>
+                            </tr>
+                            {% endif %}
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>Ngày tạo:</strong></td>
+                                <td>{{ order.created_at|vntime }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Phương thức thanh toán:</strong></td>
+                                <td>{{ render_payment_method(order) }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Trạng thái thanh toán:</strong></td>
+                                <td>{{ render_payment_status(order) }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Trạng thái đơn hàng:</strong></td>
+                                <td>{{ render_order_status(order) }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Order Items -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-shopping-bag"></i> Sản phẩm đặt hàng
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Sản phẩm</th>
+                                <th>Đơn giá</th>
+                                <th>Số lượng</th>
+                                <th>Thành tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in order.items %}
+                            <tr>
+                                <td>
+                                    <strong>{{ item.product_name }}</strong>
+                                    {% if item.product and item.product.sku %}
+                                    <br><small class="text-muted">SKU: {{ item.product.sku }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>{{ "{:,.0f}".format(item.unit_price) if item.unit_price else 'N/A' }} VNĐ</td>
+                                <td>{{ item.qty }}</td>
+                                <td><strong>{{ "{:,.0f}".format(item.line_total) if item.line_total else 'N/A' }}
+                                        VNĐ</strong></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Order Events/Timeline -->
+        {% if order.events %}
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-history"></i> Lịch sử đơn hàng
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="timeline">
+                    {% for event in order.events %}
+                    <div class="timeline-item">
+                        <div class="timeline-marker"></div>
+                        <div class="timeline-content">
+                            <h6 class="timeline-title">
+                                {% if event.event_type == 'placed' %}
+                                <i class="fas fa-plus text-info"></i> Đơn hàng được tạo
+                                {% elif event.event_type == 'confirmed' %}
+                                <i class="fas fa-check text-primary"></i> Đơn hàng đã xác nhận
+                                {% elif event.event_type == 'fulfilled' %}
+                                <i class="fas fa-truck text-info"></i> Đang giao hàng
+                                {% elif event.event_type == 'completed' %}
+                                <i class="fas fa-check-circle text-success"></i> Đã giao hàng thành công
+                                {% elif event.event_type == 'cancelled' %}
+                                <i class="fas fa-times-circle text-danger"></i> Đơn hàng đã hủy
+                                {% elif event.event_type == 'restocked' %}
+                                <i class="fas fa-undo text-warning"></i> Đã hoàn kho
+                                {% elif event.event_type == 'payment_confirmed' %}
+                                <i class="fas fa-credit-card text-success"></i> Đã xác nhận thanh toán
+                                {% elif event.event_type == 'paid' %}
+                                <i class="fas fa-credit-card text-success"></i> Đã thanh toán
+                                {% elif event.event_type == 'mock_paid' %}
+                                <i class="fas fa-money-bill text-success"></i> Đã thanh toán (COD)
+                                {% elif event.event_type == 'momo_paid' %}
+                                <i class="fas fa-wallet text-danger"></i> Đã thanh toán qua MoMo
+                                {% elif event.event_type == 'vnpay_paid' %}
+                                <i class="fas fa-university text-primary"></i> Đã thanh toán qua VNPay
+                                {% else %}
+                                <i class="fas fa-info-circle text-secondary"></i> {{ event.event_type }}
+                                {% endif %}
+                            </h6>
+                            {% if event.note %}
+                            <p class="timeline-text">{{ event.note }}</p>
+                            {% endif %}
+                            <small class="text-muted">
+                                {{ event.created_at|vntime }}
+                            </small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-md-4">
+        <!-- Order Summary -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-calculator"></i> Tóm tắt đơn hàng
+                </h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    {% if order.subtotal %}
+                    <tr>
+                        <td>Tạm tính:</td>
+                        <td class="text-end">{{ "{:,.0f}".format(order.subtotal) if order.subtotal else '0' }} VNĐ</td>
+                    </tr>
+                    {% endif %}
+                    <tr>
+                        <td>Phí ship:</td>
+                        <td class="text-end">{{ "{:,.0f}".format(order.shipping_fee) if order.shipping_fee else '0' }}
+                            VNĐ</td>
+                    </tr>
+                    <tr class="border-top">
+                        <td><strong>Tổng cộng:</strong></td>
+                        <td class="text-end"><strong class="text-primary">{{ "{:,.0f}".format(order.grand_total) if
+                                order.grand_total else '0' }} VNĐ</strong></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-cogs"></i> Thao tác
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('admin.orders') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Quay lại danh sách
+                    </a>
+
+                    {% if order.status == 'waiting_admin_confirmation' %}
+                    <button class="btn btn-success" onclick="confirmOrder('{{ order.order_code }}')">
+                        <i class="fas fa-check"></i> Xác nhận đơn hàng
+                    </button>
+                    <button class="btn btn-danger" onclick="updateOrderStatus('{{ order.id }}', 'cancelled')">
+                        <i class="fas fa-times"></i> Hủy đơn hàng
+                    </button>
+                    {% elif order.status == 'shipping' %}
+                    {# Button removed - Users now confirm receipt directly from fulfilled status #}
+                    <button class="btn btn-danger" onclick="updateOrderStatus('{{ order.id }}', 'cancelled')">
+                        <i class="fas fa-times"></i> Hủy đơn hàng
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+
+    .timeline-item {
+        position: relative;
+        margin-bottom: 20px;
+    }
+
+    .timeline-marker {
+        position: absolute;
+        left: -35px;
+        top: 5px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #007bff;
+    }
+
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: -31px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #dee2e6;
+    }
+
+    .timeline-title {
+        margin-bottom: 5px;
+        font-weight: 600;
+    }
+
+    .timeline-text {
+        margin-bottom: 5px;
+        color: #6c757d;
+    }
+</style>
+
+<script>
+    function updateOrderStatus(orderId, newStatus) {
+        const statusText = {
+            'cancelled': 'hủy'
+        };
+
+        if (confirm(`Bạn có chắc chắn muốn ${statusText[newStatus]} đơn hàng này?`)) {
+            fetch(`/admin/orders/${orderId}/status`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    status: newStatus
+                })
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data && data.success) {
+                        showAlert('success', data.message || 'Cập nhật thành công');
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    } else {
+                        showAlert('error', data.message || 'Có lỗi xảy ra');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('error', 'Có lỗi xảy ra khi cập nhật trạng thái đơn hàng');
+                });
+        }
+    }
+
+    function confirmOrder(orderCode) {
+        if (confirm('Bạn có chắc chắn muốn xác nhận đơn hàng này?')) {
+            fetch(`/admin/orders/${orderCode}/confirm`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showAlert('success', data.message);
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    } else {
+                        showAlert('error', data.error || 'Có lỗi xảy ra');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('error', 'Có lỗi xảy ra khi xác nhận đơn hàng');
+                });
+        }
+    }
+
+    // DEPRECATED: markDelivered function - no longer needed
+    // Users now confirm receipt directly from fulfilled status
+    /*
+    function markDelivered(orderCode) {
+        if (confirm('Bạn có chắc chắn muốn đánh dấu đơn hàng này đã giao?')) {
+            fetch(`/admin/orders/${orderCode}/mark-delivered`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('success', data.message);
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    showAlert('error', data.error || 'Có lỗi xảy ra');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('error', 'Có lỗi xảy ra khi đánh dấu đã giao');
+            });
+        }
+    }
+    */
+
+    function showAlert(type, message) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
+        alertDiv.style.top = '20px';
+        alertDiv.style.right = '20px';
+        alertDiv.style.zIndex = '9999';
+        alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+        document.body.appendChild(alertDiv);
+
+        setTimeout(() => {
+            alertDiv.remove();
+        }, 5000);
+    }
+</script>
+{% endblock %}

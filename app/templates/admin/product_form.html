@@ -1,0 +1,295 @@
+{% extends "admin/base.html" %}
+
+{% block page_title %}
+    {% if product %}Chỉnh sửa sách{% else %}Thêm sách mới{% endif %}
+{% endblock %}
+
+{% block page_subtitle %}
+    {% if product %}Cập nhật thông tin sách{% else %}Tạo sách mới{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-book"></i> 
+                    {% if product %}Chỉnh sửa sách{% else %}Thêm sách mới{% endif %}
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="productForm">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Tên sách <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="name" name="name" 
+                                       value="{% if product %}{{ product.name }}{% endif %}" required>
+                            </div>
+                            
+                            <!-- Book specific fields -->
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="authors" class="form-label">Tác giả</label>
+                                        <input type="text" class="form-control" id="authors" name="authors" 
+                                               value="{% if product %}{{ product.authors or '' }}{% endif %}">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="translators" class="form-label">Dịch giả</label>
+                                        <input type="text" class="form-control" id="translators" name="translators" 
+                                               value="{% if product %}{{ product.translators or '' }}{% endif %}">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="publisher_name" class="form-label">Nhà xuất bản</label>
+                                        <input type="text" class="form-control" id="publisher_name" name="publisher_name" 
+                                               value="{% if product %}{{ product.publisher_name or '' }}{% endif %}">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="publish_year" class="form-label">Năm xuất bản</label>
+                                        <input type="number" class="form-control" id="publish_year" name="publish_year" 
+                                               min="1000" max="2100"
+                                               value="{% if product %}{{ product.publish_year or '' }}{% endif %}">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="pages" class="form-label">Số trang</label>
+                                        <input type="number" class="form-control" id="pages" name="pages" 
+                                               min="1"
+                                               value="{% if product %}{{ product.pages or '' }}{% endif %}">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="age_min" class="form-label">Tuổi tối thiểu</label>
+                                        <input type="number" class="form-control" id="age_min" name="age_min" 
+                                               min="0" max="100"
+                                               value="{% if product %}{{ product.age_min or '' }}{% endif %}">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="age_max" class="form-label">Tuổi tối đa</label>
+                                        <input type="number" class="form-control" id="age_max" name="age_max" 
+                                               min="0" max="100"
+                                               value="{% if product %}{{ product.age_max or '' }}{% endif %}">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="dimensions_raw" class="form-label">Kích thước</label>
+                                        <input type="text" class="form-control" id="dimensions_raw" name="dimensions_raw" 
+                                               placeholder="VD: 20.5 x 25.4"
+                                               value="{% if product %}{{ product.dimensions_raw or '' }}{% endif %}">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="isbn13" class="form-label">ISBN</label>
+                                        <input type="text" class="form-control" id="isbn13" name="isbn13" 
+                                               value="{% if product %}{{ product.isbn13 or '' }}{% endif %}">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="short_desc" class="form-label">Mô tả ngắn</label>
+                                <textarea class="form-control" id="short_desc" name="short_desc" 
+                                          rows="3">{% if product %}{{ product.short_desc or '' }}{% endif %}</textarea>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="price" class="form-label">Giá gốc (VNĐ) <span class="text-danger">*</span></label>
+                                        <input type="number" class="form-control" id="price" name="price" 
+                                               min="0" step="1000" 
+                                               value="{% if product %}{{ product.price|int }}{% endif %}" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="sale_price" class="form-label">Giá khuyến mại (VNĐ)</label>
+                                        <input type="number" class="form-control" id="sale_price" name="sale_price" 
+                                               min="0" step="1000"
+                                               value="{% if product and product.sale_price %}{{ product.sale_price|int }}{% endif %}">
+                                        <div class="form-text">Để trống nếu không có khuyến mại</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="qty_on_hand" class="form-label">Số lượng tồn kho</label>
+                                <input type="number" class="form-control" id="qty_on_hand" name="qty_on_hand" 
+                                       min="0" step="1"
+                                       value="{% if product and product.stock %}{{ product.stock.qty_on_hand }}{% else %}0{% endif %}">
+                                <div class="form-text">Số lượng sản phẩm hiện có trong kho</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="image_url" class="form-label">URL hình ảnh</label>
+                                <input type="url" class="form-control" id="image_url" name="image_url" 
+                                       value="{% if product %}{{ product.image_url or '' }}{% endif %}">
+                                <div class="form-text">Nhập URL của hình ảnh sản phẩm</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="categories" class="form-label">Danh mục</label>
+                                <select class="form-select" id="categories" name="categories" multiple>
+                                    {% for category in categories %}
+                                        <option value="{{ category.id }}"
+                                            {% if product and product.categories %}
+                                                {% for cat in product.categories %}
+                                                    {% if cat.id == category.id %}selected{% endif %}
+                                                {% endfor %}
+                                            {% endif %}>
+                                            {{ category.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">Giữ Ctrl và click để chọn nhiều danh mục</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="is_active" name="is_active" 
+                                           {% if not product or product.is_active %}checked{% endif %}>
+                                    <label class="form-check-label" for="is_active">
+                                        Sản phẩm hoạt động
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Xem trước hình ảnh</label>
+                                <div class="border rounded p-3 text-center">
+                                    <img id="imagePreview" 
+                                         src="{% if product and product.image_url %}{{ product.image_url }}{% endif %}" 
+                                         alt="Preview" 
+                                         class="img-fluid"
+                                         style="max-height: 200px; {% if not product or not product.image_url %}display: none;{% endif %}">
+                                    <div id="noImageText" 
+                                         class="text-muted {% if product and product.image_url %}d-none{% endif %}">
+                                        <i class="fas fa-image fa-3x mb-2"></i>
+                                        <br>Chưa có hình ảnh
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('admin.products') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Quay lại
+                        </a>
+                        <button type="submit" class="btn btn-custom">
+                            <i class="fas fa-save"></i> 
+                            {% if product %}Cập nhật{% else %}Tạo mới{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Preview image when URL changes
+document.getElementById('image_url').addEventListener('input', function() {
+    const url = this.value;
+    const preview = document.getElementById('imagePreview');
+    const noImageText = document.getElementById('noImageText');
+    
+    if (url) {
+        preview.src = url;
+        preview.style.display = 'block';
+        noImageText.classList.add('d-none');
+    } else {
+        preview.style.display = 'none';
+        noImageText.classList.remove('d-none');
+    }
+});
+
+// Handle form submission
+document.getElementById('productForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const data = {};
+    
+    // Convert form data to object
+    for (let [key, value] of formData.entries()) {
+        if (key === 'categories') {
+            // Handle multiple select
+            if (!data[key]) data[key] = [];
+            data[key].push(value);
+        } else if (key === 'is_active') {
+            data[key] = true;
+        } else {
+            data[key] = value;
+        }
+    }
+    
+    // If checkbox not checked, it won't be in formData
+    if (!data.is_active) {
+        data.is_active = false;
+    }
+    
+    const url = {% if product %}'{{ url_for("admin.edit_product", product_id=product.id) }}'{% else %}'{{ url_for("admin.create_product") }}'{% endif %};
+    
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            window.location.href = '{{ url_for("admin.products") }}';
+        } else {
+            alert('Lỗi: ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('Có lỗi xảy ra: ' + error);
+    });
+});
+
+// Format number inputs
+document.getElementById('price').addEventListener('input', function() {
+    this.value = this.value.replace(/[^0-9]/g, '');
+});
+
+document.getElementById('sale_price').addEventListener('input', function() {
+    this.value = this.value.replace(/[^0-9]/g, '');
+});
+
+document.getElementById('qty_on_hand').addEventListener('input', function() {
+    this.value = this.value.replace(/[^0-9]/g, '');
+});
+</script>
+{% endblock %}

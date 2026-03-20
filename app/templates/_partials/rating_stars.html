@@ -1,0 +1,17 @@
+{% set rating_value = (rating.avg if rating and rating.avg else 0) or (product.rating.avg if product and product.rating and product.rating.avg else 0) or 0 %}
+{% set rating_count = (rating.count if rating and rating.count else 0) or (product.rating.count if product and product.rating and product.rating.count else 0) or 0 %}
+
+<div class="rating-stars d-inline-block">
+    {% for i in range(1, 6) %}
+        {% if i <= rating_value %}
+            <i class="bi bi-star-fill text-warning"></i>
+        {% elif i - 0.5 <= rating_value %}
+            <i class="bi bi-star-half text-warning"></i>
+        {% else %}
+            <i class="bi bi-star text-muted"></i>
+        {% endif %}
+    {% endfor %}
+    {% if rating_value > 0 %}
+        <span class="ms-1 small text-muted">{{ "%.1f" | format(rating_value or 0) }}</span>
+    {% endif %}
+</div>

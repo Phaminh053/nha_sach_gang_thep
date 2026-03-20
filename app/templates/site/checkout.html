@@ -1,0 +1,438 @@
+{% extends "base.html" %}
+
+{% block title %}Thanh toán - Nhà sách Gang Thép{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('site.home') }}">Trang chủ</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('site.cart') }}">Giỏ hàng</a></li>
+            <li class="breadcrumb-item active">Thanh toán</li>
+        </ol>
+    </nav>
+
+    <h1>Thanh toán</h1>
+
+    <form method="POST" data-logged-in="{% if session.user_id %}true{% else %}false{% endif %}">
+        {{ form.hidden_tag() }}
+
+        <div class="row">
+            <!-- Customer Information -->
+            <div class="col-lg-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Thông tin khách hàng</h5>
+                        {% if session.user_id %}
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle"></i>
+                            Thông tin đã được điền sẵn từ tài khoản của bạn. Bạn có thể chỉnh sửa nếu cần.
+                        </small>
+                        {% endif %}
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.customer_name.label(class="form-label") }} <span class="text-danger">*</span>
+                                {{ form.customer_name(class="form-control") }}
+                                {% if form.customer_name.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.customer_name.errors %}
+                                    <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                {{ form.phone.label(class="form-label") }} <span class="text-danger">*</span>
+                                {{ form.phone(class="form-control") }}
+                                {% if form.phone.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.phone.errors %}
+                                    <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.address.label(class="form-label") }} <span class="text-danger">*</span>
+                            {{ form.address(class="form-control") }}
+                            {% if form.address.errors %}
+                            <div class="text-danger">
+                                {% for error in form.address.errors %}
+                                <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                {{ form.ward.label(class="form-label") }} <span class="text-danger">*</span>
+                                {{ form.ward(class="form-control", id="ward") }}
+                                {% if form.ward.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.ward.errors %}
+                                    <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                {{ form.district.label(class="form-label") }} <span class="text-danger">*</span>
+                                {{ form.district(class="form-control", id="district") }}
+                                {% if form.district.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.district.errors %}
+                                    <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                {{ form.province.label(class="form-label") }} <span class="text-danger">*</span>
+                                {{ form.province(class="form-control", id="province") }}
+                                {% if form.province.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.province.errors %}
+                                    <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Method -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Phương thức thanh toán</h5>
+                    </div>
+                    <div class="card-body">
+                        {% for value, label in form.payment_method.choices %}
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="payment_method" value="{{ value }}"
+                                id="payment_{{ value }}" {% if form.payment_method.data==value %}checked{% endif %}>
+                            <label class="form-check-label" for="payment_{{ value }}">
+                                {% if value == 'COD' %}
+                                <i class="bi bi-cash"></i>
+                                {% elif value == 'MOMO' %}
+                                <img src="https://cdn.haitrieu.com/wp-content/uploads/2022/10/Logo-MoMo-Circle.png" alt="MoMo"
+                                    style="width: 20px; height: 20px; vertical-align: middle;">
+                                {% else %}
+                                <i class="bi bi-credit-card"></i>
+                                {% endif %}
+                                {{ label }}
+                            </label>
+                        </div>
+                        {% endfor %}
+
+                        <!-- MoMo Payment Information -->
+                        <div id="momo-info" class="mt-3 p-3 border rounded"
+                            style="display: none; background: linear-gradient(135deg, #af1f6b 0%, #d82d7e 100%);">
+                            <div class="text-white">
+                                <h6 class="mb-2"><img src="https://cdn.haitrieu.com/wp-content/uploads/2022/10/Logo-MoMo-Circle.png"
+                                        alt="MoMo" style="width: 24px; height: 24px; vertical-align: middle;"> Thanh
+                                    toán qua MoMo</h6>
+                                <p class="mb-2"><small>Bạn sẽ được chuyển đến trang thanh toán MoMo để hoàn tất đơn
+                                        hàng.</small></p>
+                                <ul class="list-unstyled mb-0" style="font-size: 0.85rem;">
+                                    <li>• Quét mã QR bằng app MoMo</li>
+                                    <li>• Thanh toán an toàn, nhanh chóng</li>
+                                    <li>• Đơn hàng được xác nhận ngay sau khi thanh toán</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Legacy: Bank Transfer Information (hidden, kept for backward compatibility) -->
+                        <div id="bank-transfer-info" class="mt-3 p-3 border rounded bg-light" style="display: none;">
+                            <h6><i class="bi bi-bank"></i> Thông tin chuyển khoản</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Số tài khoản:</strong> 0123456789</p>
+                                    <p class="mb-1"><strong>Ngân hàng:</strong> Vietcombank</p>
+                                    <p class="mb-1"><strong>Chi nhánh:</strong> Chi nhánh Thủ Đức</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Chủ tài khoản:</strong> NHÀ SÁCH GANG THÉP</p>
+                                    <p class="mb-1"><strong>Nội dung:</strong> <span
+                                            id="transfer-content">DT-XXXXXX</span></p>
+                                </div>
+                            </div>
+
+                            <div class="form-check mt-3">
+                                {{ form.transfer_confirmed(class="form-check-input", id="transfer_confirmed") }}
+                                <label class="form-check-label" for="transfer_confirmed">
+                                    <strong>{{ form.transfer_confirmed.label.text }}</strong>
+                                </label>
+                            </div>
+
+                            {% if form.transfer_confirmed.errors %}
+                            <div class="text-danger mt-1">
+                                {% for error in form.transfer_confirmed.errors %}
+                                <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+
+                            <div class="alert alert-info mt-2 mb-0">
+                                <i class="bi bi-info-circle"></i>
+                                <strong>Lưu ý:</strong> Vui lòng chuyển khoản đúng nội dung để chúng tôi có thể xác nhận
+                                đơn hàng nhanh chóng.
+                            </div>
+                        </div>
+
+                        {% if form.payment_method.errors %}
+                        <div class="text-danger">
+                            {% for error in form.payment_method.errors %}
+                            <small>{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Summary -->
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Đơn hàng của bạn</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Items -->
+                        <div class="order-items mb-3">
+                            {% for item in items %}
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-0">{{ item.name }}</h6>
+                                    <small class="text-muted">{{ item.unit_price | vnd }} × {{ item.qty }}</small>
+                                </div>
+                                <span class="fw-bold">{{ item.line_total | vnd }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <hr>
+
+                        <!-- Totals -->
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Tạm tính:</span>
+                            <span id="subtotal">{{ subtotal | vnd }}</span>
+                        </div>
+
+                        <hr>
+
+                        <div class="d-flex justify-content-between mb-3">
+                            <strong>Tổng cộng:</strong>
+                            <strong class="text-primary" id="grand-total">{{ grand_total | vnd }}</strong>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg" id="submit-btn">
+                                <i class="bi bi-check-circle" id="submit-icon"></i> <span id="submit-text">Đặt
+                                    hàng</span>
+                            </button>
+                            <a href="{{ url_for('site.cart') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Quay lại giỏ hàng
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Shipping Info - REMOVED -->
+                <div class="card mt-3">
+                    <div class="card-body">
+                        <h6><i class="bi bi-truck"></i> Thông tin giao hàng</h6>
+                        <ul class="list-unstyled mb-0">
+                            <li><small>• Miễn phí vận chuyển toàn quốc</small></li>
+                            <li><small>• Giao hàng 1-3 ngày</small></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Include our checkout.js -->
+<script src="{{ url_for('static', filename='js/checkout.js') }}"></script>
+
+<script>
+    console.log('[CHECKOUT DEBUG] Script block started - line 270');
+
+    document.addEventListener('DOMContentLoaded', function () {
+        console.log('[CHECKOUT DEBUG] DOMContentLoaded fired');
+
+        try {
+            console.log('[CHECKOUT DEBUG] Getting form elements...');
+            const form = document.querySelector('form');
+            console.log('[CHECKOUT DEBUG] form:', form ? 'found' : 'not found');
+
+            const momoInfo = document.getElementById('momo-info');
+            const bankTransferInfo = document.getElementById('bank-transfer-info');
+            const transferContent = document.getElementById('transfer-content');
+            const transferConfirmed = document.getElementById('transfer_confirmed');
+            const submitBtn = document.getElementById('submit-btn');
+            const submitText = document.getElementById('submit-text');
+            const submitIcon = document.getElementById('submit-icon');
+            console.log('[CHECKOUT DEBUG] All elements retrieved successfully');
+
+            // Payment method change handler
+            function handlePaymentMethodChange() {
+                console.log('[CHECKOUT DEBUG] handlePaymentMethodChange called');
+                const selectedPayment = document.querySelector('input[name="payment_method"]:checked');
+                console.log('[CHECKOUT DEBUG] Selected payment:', selectedPayment ? selectedPayment.value : 'none');
+
+                // Hide all payment info sections first
+                if (momoInfo) momoInfo.style.display = 'none';
+                if (bankTransferInfo) bankTransferInfo.style.display = 'none';
+
+                if (selectedPayment) {
+                    if (selectedPayment.value === 'MOMO') {
+                        console.log('[CHECKOUT DEBUG] Processing MOMO payment');
+                        // Show MoMo info
+                        if (momoInfo) momoInfo.style.display = 'block';
+                        submitText.textContent = 'Thanh toan voi MoMo';
+                        submitBtn.style.background = 'linear-gradient(135deg, #af1f6b 0%, #d82d7e 100%)';
+                        submitBtn.style.border = 'none';
+                        submitBtn.disabled = false;
+                        console.log('[CHECKOUT DEBUG] MOMO setup complete');
+                    } else if (selectedPayment.value === 'VNPAY') {
+                        console.log('[CHECKOUT DEBUG] Processing VNPAY payment');
+                        submitText.textContent = 'Thanh toan voi VNPay';
+                        submitBtn.style.background = 'linear-gradient(135deg, #0066b3 0%, #004d99 100%)';
+                        submitBtn.style.border = 'none';
+                        submitBtn.disabled = false;
+                        console.log('[CHECKOUT DEBUG] VNPAY setup complete');
+                    } else if (selectedPayment.value === 'MOCK_TRANSFER') {
+                        console.log('[CHECKOUT DEBUG] Processing MOCK_TRANSFER payment');
+                        // Legacy: Show bank transfer info
+                        if (bankTransferInfo) {
+                            bankTransferInfo.style.display = 'block';
+                            const randomCode = 'FJ-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+                            if (transferContent) transferContent.textContent = randomCode;
+                        }
+                        updateSubmitButton();
+                    } else {
+                        console.log('[CHECKOUT DEBUG] Processing COD payment');
+                        // COD
+                        submitText.textContent = 'Dat hang';
+                        submitBtn.style.background = '';
+                        submitBtn.style.border = '';
+                        submitBtn.disabled = false;
+                    }
+                }
+                console.log('[CHECKOUT DEBUG] handlePaymentMethodChange completed');
+            }
+
+            function updateSubmitButton() {
+                console.log('[CHECKOUT DEBUG] updateSubmitButton called');
+                const selectedPayment = document.querySelector('input[name="payment_method"]:checked');
+                if (selectedPayment && selectedPayment.value === 'MOCK_TRANSFER') {
+                    if (transferConfirmed && transferConfirmed.checked) {
+                        submitText.textContent = 'Xac nhan dat hang';
+                        submitBtn.disabled = false;
+                    } else {
+                        submitText.textContent = 'Dat hang (Chua chuyen khoan)';
+                        submitBtn.disabled = false;
+                    }
+                }
+            }
+
+            console.log('[CHECKOUT DEBUG] Adding event listeners...');
+            // Add event listeners
+            document.querySelectorAll('input[name="payment_method"]').forEach(function (radio) {
+                radio.addEventListener('change', handlePaymentMethodChange);
+            });
+            console.log('[CHECKOUT DEBUG] Payment method listeners added');
+
+            if (transferConfirmed) {
+                transferConfirmed.addEventListener('change', updateSubmitButton);
+            }
+
+            // Initial setup
+            console.log('[CHECKOUT DEBUG] Calling initial handlePaymentMethodChange');
+            handlePaymentMethodChange();
+
+            // Check if user is logged in from data attribute
+            console.log('[CHECKOUT DEBUG] Checking login status...');
+            const isLoggedIn = form.getAttribute('data-logged-in') === 'true';
+            console.log('[CHECKOUT DEBUG] isLoggedIn:', isLoggedIn);
+
+            // Highlight pre-filled fields for user awareness
+            if (isLoggedIn) {
+                console.log('[CHECKOUT DEBUG] User is logged in, highlighting fields');
+                const customerNameField = document.querySelector('input[name="customer_name"]');
+                const phoneField = document.querySelector('input[name="phone"]');
+
+                // Add subtle visual indication for pre-filled fields
+                if (customerNameField && customerNameField.value.trim()) {
+                    customerNameField.classList.add('border-primary');
+                    customerNameField.style.backgroundColor = '#f8f9ff';
+                }
+
+                if (phoneField && phoneField.value.trim()) {
+                    phoneField.classList.add('border-primary');
+                    phoneField.style.backgroundColor = '#f8f9ff';
+                }
+
+                console.log('[CHECKOUT DEBUG] Setting up input listeners for fields');
+                // Remove visual indication when user starts typing
+                var fields = [customerNameField, phoneField];
+                for (var i = 0; i < fields.length; i++) {
+                    var field = fields[i];
+                    if (field) {
+                        field.addEventListener('input', function () {
+                            this.classList.remove('border-primary');
+                            this.style.backgroundColor = '';
+                        });
+                    }
+                }
+                console.log('[CHECKOUT DEBUG] Field listeners added');
+            }
+
+            console.log('[CHECKOUT DEBUG] Setting up form submit handler');
+            // Form validation
+            form.addEventListener('submit', function (e) {
+                console.log('[CHECKOUT DEBUG] Form submit triggered');
+                const requiredFields = form.querySelectorAll('input[required], select[required]');
+                var isValid = true;
+
+                requiredFields.forEach(function (field) {
+                    if (!field.value.trim()) {
+                        isValid = false;
+                        field.classList.add('is-invalid');
+                    } else {
+                        field.classList.remove('is-invalid');
+                    }
+                });
+
+                if (!isValid) {
+                    e.preventDefault();
+                    alert('Vui long dien day du thong tin bat buoc');
+                } else {
+                    console.log('[CHECKOUT DEBUG] Form validation passed, submitting...');
+                }
+            });
+
+            console.log('[CHECKOUT DEBUG] All initialization complete!');
+
+        } catch (error) {
+            console.error('[CHECKOUT DEBUG] ERROR:', error.message);
+            console.error('[CHECKOUT DEBUG] Error stack:', error.stack);
+        }
+    });
+
+    console.log('[CHECKOUT DEBUG] Script block ended');
+</script>
+{% endblock %}

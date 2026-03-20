@@ -1,0 +1,180 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Chỉnh sửa người dùng - {{ user.display_name }}{% endblock %}
+{% block page_title %}Chỉnh sửa người dùng{% endblock %}
+{% block page_subtitle %}Cập nhật thông tin cho {{ user.display_name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-user-edit"></i> Chỉnh sửa thông tin người dùng</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <div class="row">
+                        <!-- Avatar Section -->
+                        <div class="col-md-12 text-center mb-4">
+                            <div class="mb-3">
+                                <i class="{{ user|avatar_icon }}" style="font-size: 6.25rem; color: #6c757d;"></i>
+                            </div>
+                        </div>
+                        
+                        <!-- Basic Info -->
+                        <div class="col-md-6 mb-3">
+                            <label for="username" class="form-label">Tên đăng nhập <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="username" name="username" 
+                                   value="{{ user.username }}" required>
+                            <div class="form-text">Tên đăng nhập phải là duy nhất</div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" 
+                                   value="{{ user.email or '' }}">
+                            <div class="form-text">Email phải là duy nhất (nếu có)</div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="full_name" class="form-label">Họ và tên</label>
+                            <input type="text" class="form-control" id="full_name" name="full_name" 
+                                   value="{{ user.full_name or '' }}">
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="phone" class="form-label">Số điện thoại</label>
+                            <input type="tel" class="form-control" id="phone" name="phone" 
+                                   value="{{ user.phone or '' }}">
+                        </div>
+                        
+                        <!-- Roles -->
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Vai trò</label>
+                            <div class="row">
+                                {% for role in roles %}
+                                <div class="col-md-6 mb-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" 
+                                               id="role_{{ role.id }}" name="roles" value="{{ role.id }}"
+                                               {% if role in user.roles %}checked{% endif %}>
+                                        <label class="form-check-label" for="role_{{ role.id }}">
+                                            {{ role.name }}
+                                        </label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <div class="form-text">Chọn ít nhất một vai trò cho người dùng</div>
+                        </div>
+                        
+                        <!-- Additional Info -->
+                        <div class="col-md-12">
+                            <div class="alert alert-info">
+                                <h6><i class="fas fa-info-circle"></i> Thông tin bổ sung</h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <small><strong>Ngày tạo:</strong> {{ user.created_at.strftime('%d/%m/%Y %H:%M') if user.created_at else 'N/A' }}</small>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <small><strong>Lần đăng nhập cuối:</strong> 
+                                            {% if user.last_login_at %}
+                                                {{ user.last_login_at.strftime('%d/%m/%Y %H:%M') }}
+                                            {% else %}
+                                                Chưa đăng nhập
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                    <div class="col-md-6 mt-2">
+                                        <small><strong>Email đã xác thực:</strong> 
+                                            {% if user.email_verified %}
+                                                <span class="text-success">Có</span>
+                                            {% else %}
+                                                <span class="text-warning">Chưa</span>
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('admin.user_detail', user_id=user.id) }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Quay lại
+                        </a>
+                        <div>
+                            <a href="{{ url_for('admin.change_user_password', user_id=user.id) }}" class="btn btn-outline-warning me-2">
+                                <i class="fas fa-key"></i> Đổi mật khẩu
+                            </a>
+                            <a href="{{ url_for('admin.users') }}" class="btn btn-outline-secondary me-2">
+                                <i class="fas fa-times"></i> Hủy
+                            </a>
+                            <button type="submit" class="btn btn-custom">
+                                <i class="fas fa-save"></i> Lưu thay đổi
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Form validation
+$(document).ready(function() {
+    $('form').on('submit', function(e) {
+        const username = $('#username').val().trim();
+        if (!username) {
+            e.preventDefault();
+            alert('Vui lòng nhập tên đăng nhập');
+            $('#username').focus();
+            return false;
+        }
+        
+        // Check if at least one role is selected
+        const rolesChecked = $('input[name="roles"]:checked').length;
+        if (rolesChecked === 0) {
+            e.preventDefault();
+            alert('Vui lòng chọn ít nhất một vai trò cho người dùng');
+            return false;
+        }
+    });
+    
+    // Real-time username validation
+    $('#username').on('input', function() {
+        const username = $(this).val().trim();
+        if (username.length > 0 && username.length < 3) {
+            $(this).addClass('is-invalid');
+            $(this).siblings('.invalid-feedback').remove();
+            $(this).after('<div class="invalid-feedback">Tên đăng nhập phải có ít nhất 3 ký tự</div>');
+        } else {
+            $(this).removeClass('is-invalid');
+            $(this).siblings('.invalid-feedback').remove();
+        }
+    });
+    
+    // Email validation
+    $('#email').on('input', function() {
+        const email = $(this).val().trim();
+        if (email.length > 0) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                $(this).addClass('is-invalid');
+                $(this).siblings('.invalid-feedback').remove();
+                $(this).after('<div class="invalid-feedback">Định dạng email không hợp lệ</div>');
+            } else {
+                $(this).removeClass('is-invalid');
+                $(this).siblings('.invalid-feedback').remove();
+            }
+        } else {
+            $(this).removeClass('is-invalid');
+            $(this).siblings('.invalid-feedback').remove();
+        }
+    });
+});
+</script>
+{% endblock %}

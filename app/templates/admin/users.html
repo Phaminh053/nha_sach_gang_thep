@@ -1,0 +1,191 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Quản lý người dùng - Admin Panel{% endblock %}
+{% block page_title %}Quản lý người dùng{% endblock %}
+{% block page_subtitle %}Danh sách tất cả người dùng trong hệ thống{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Search and Filter -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form method="GET" class="row g-3">
+                    <div class="col-md-4">
+                        <input type="text" class="form-control" name="search" 
+                               placeholder="Tìm kiếm theo tên, email, username..." 
+                               value="{{ search }}">
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" name="role">
+                            <option value="">Tất cả vai trò</option>
+                            {% for role in roles %}
+                            <option value="{{ role.code }}" 
+                                    {% if role_filter == role.code %}selected{% endif %}>
+                                {{ role.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-custom">
+                            <i class="fas fa-search"></i> Tìm kiếm
+                        </button>
+                        <a href="{{ url_for('admin.users') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-refresh"></i> Xóa bộ lọc
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Users Table -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-users"></i> Danh sách người dùng
+                </h5>
+                <span class="badge bg-primary">{{ pagination.total }} người dùng</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Avatar</th>
+                                <th>Thông tin</th>
+                                <th>Vai trò</th>
+                                <th>Ngày tạo</th>
+                                <th>Lần đăng nhập cuối</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <i class="{{ user|avatar_icon }}" style="font-size: 2.5rem; color: #6c757d;"></i>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong>{{ user.display_name }}</strong>
+                                        <br>
+                                        <small class="text-muted">@{{ user.username }}</small>
+                                        {% if user.email %}
+                                        <br>
+                                        <small class="text-muted">{{ user.email }}</small>
+                                        {% endif %}
+                                        {% if user.phone %}
+                                        <br>
+                                        <small class="text-muted"><i class="fas fa-phone"></i> {{ user.phone }}</small>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    {% for role in user.roles %}
+                                        <span class="badge bg-info me-1">{{ role.name }}</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Chưa phân quyền</span>
+                                    {% endfor %}
+                                </td>
+                                <td>
+                                    <small>
+                                        {{ user.created_at.strftime('%d/%m/%Y') if user.created_at else 'N/A' }}
+                                        <br>
+                                        {{ user.created_at.strftime('%H:%M') if user.created_at else '' }}
+                                    </small>
+                                </td>
+                                <td>
+                                    <small>
+                                        {% if user.last_login_at %}
+                                            {{ user.last_login_at.strftime('%d/%m/%Y %H:%M') }}
+                                        {% else %}
+                                            <span class="text-muted">Chưa đăng nhập</span>
+                                        {% endif %}
+                                    </small>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ url_for('admin.user_detail', user_id=user.id) }}" 
+                                           class="btn btn-sm btn-outline-primary" title="Xem chi tiết">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ url_for('admin.edit_user', user_id=user.id) }}" 
+                                           class="btn btn-sm btn-outline-warning" title="Chỉnh sửa">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">Không tìm thấy người dùng nào</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        {% if pagination.pages > 1 %}
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if pagination.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('admin.users', page=pagination.prev_num, search=search, role=role_filter) }}">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+
+                {% for page_num in pagination.iter_pages() %}
+                    {% if page_num %}
+                        {% if page_num != pagination.page %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('admin.users', page=page_num, search=search, role=role_filter) }}">
+                                {{ page_num }}
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_num }}</span>
+                        </li>
+                        {% endif %}
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">…</span>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if pagination.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('admin.users', page=pagination.next_num, search=search, role=role_filter) }}">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Toast for notifications -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="statusToast" class="toast" role="alert">
+        <div class="toast-header">
+            <strong class="me-auto">Thông báo</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body"></div>
+    </div>
+</div>
+{% endblock %}

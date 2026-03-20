@@ -1,0 +1,356 @@
+{% extends "base.html" %}
+
+{% block title %}Đơn hàng #{{ order.order_code }} - Nhà sách Gang Thép{% endblock %}
+
+{# Import order helpers for consistent status display #}
+{% from 'site/_order_helpers.html' import render_user_order_status, render_user_payment_status, render_user_payment_method %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('site.home') }}">Trang chủ</a></li>
+            <li class="breadcrumb-item active">Đơn hàng #{{ order.order_code }}</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <!-- Order Info -->
+        <div class="col-lg-8">
+            <!-- Order Header -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">Đơn hàng #{{ order.order_code }}</h4>
+                        <div>
+                            {{ render_user_order_status(order) }}
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Thông tin khách hàng:</h6>
+                            <p class="mb-1"><strong>{{ order.customer_name }}</strong></p>
+                            <p class="mb-1">{{ order.phone }}</p>
+                            <p class="mb-0">{{ order.address }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Thông tin đơn hàng:</h6>
+                            <p class="mb-1">Ngày đặt: {{ order.created_at|vntime }}</p>
+                            <p class="mb-1">Thanh toán: {{ render_user_payment_method(order) }}</p>
+                            <p class="mb-0">Trạng thái thanh toán: {{ render_user_payment_status(order) }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Items -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Sản phẩm đã đặt</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Sản phẩm</th>
+                                    <th>Đơn giá</th>
+                                    <th>Số lượng</th>
+                                    <th>Thành tiền</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in order.items %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            {% if item.product and item.product.image_url %}
+                                                <img src="{{ item.product.image_url }}" 
+                                                     class="img-thumbnail me-3" style="width: 50px; height: 50px; object-fit: cover;">
+                                            {% else %}
+                                                <div class="bg-light rounded me-3 d-flex align-items-center justify-content-center" 
+                                                     style="width: 50px; height: 50px; font-size: 0.8rem; color: #6c757d;">
+                                                    No Image
+                                                </div>
+                                            {% endif %}
+                                            <div>
+                                                <h6 class="mb-0">{{ item.product_name }}</h6>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="align-middle">{{ "{:,.0f}".format(item.unit_price) }} đ</td>
+                                    <td class="align-middle">{{ item.qty }}</td>
+                                    <td class="align-middle">{{ "{:,.0f}".format(item.line_total) }} đ</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Timeline -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Lịch sử đơn hàng</h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        {% for event in timeline %}
+                        <div class="timeline-item d-flex mb-3">
+                            <div class="timeline-marker">
+                                {% if event.event_type in ['completed', 'admin_confirmed', 'payment_confirmed', 'confirmed'] %}
+                                    <i class="bi bi-check-circle-fill text-success"></i>
+                                {% elif event.event_type in ['delivered', 'fulfilled'] %}
+                                    <i class="bi bi-truck text-info"></i>
+                                {% elif event.event_type == 'placed' %}
+                                    <i class="bi bi-clock text-warning"></i>
+                                {% elif event.event_type == 'cancelled' %}
+                                    <i class="bi bi-x-circle text-danger"></i>
+                                {% elif event.event_type == 'restocked' %}
+                                    <i class="bi bi-arrow-repeat text-info"></i>
+                                {% elif event.event_type in ['paid', 'mock_paid', 'momo_paid', 'vnpay_paid'] %}
+                                    <i class="bi bi-credit-card text-success"></i>
+                                {% else %}
+                                    <i class="bi bi-circle text-primary"></i>
+                                {% endif %}
+                            </div>
+                            <div class="timeline-content ms-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-1">
+                                        {% if event.event_type == 'placed' %}
+                                            Đặt hàng
+                                        {% elif event.event_type == 'payment_confirmed' %}
+                                            Đã xác nhận thanh toán
+                                        {% elif event.event_type in ['admin_confirmed', 'confirmed'] %}
+                                            Đã xác nhận đơn hàng
+                                        {% elif event.event_type in ['shipping_started', 'fulfilled'] %}
+                                            Đang giao hàng
+                                        {% elif event.event_type == 'delivered' %}
+                                            Đã giao đến nơi
+                                        {% elif event.event_type == 'completed' %}
+                                            Đã giao hàng thành công
+                                        {% elif event.event_type == 'cancelled' %}
+                                            Đã hủy
+                                        {% elif event.event_type == 'restocked' %}
+                                            Đã hoàn kho
+                                        {% elif event.event_type == 'mock_paid' %}
+                                            Đã thanh toán (COD)
+                                        {% elif event.event_type == 'momo_paid' %}
+                                            Đã thanh toán qua MoMo
+                                        {% elif event.event_type == 'vnpay_paid' %}
+                                            Đã thanh toán qua VNPay
+                                        {% elif event.event_type == 'paid' %}
+                                            Đã thanh toán
+                                        {% else %}
+                                            {{ event.event_type }}
+                                        {% endif %}
+                                    </h6>
+                                    <small class="text-muted">{{ event.created_at|vntime }}</small>
+                                </div>
+                                {% if event.note %}
+                                <p class="mb-0 text-muted">{{ event.note }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Order Summary -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Tổng kết đơn hàng</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Tạm tính:</span>
+                        <span>{{ "{:,.0f}".format(order.subtotal if order.subtotal else 0) }} đ</span>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between mb-3">
+                        <strong>Tổng cộng:</strong>
+                        <strong class="text-primary">{{ "{:,.0f}".format(order.grand_total) }} đ</strong>
+                    </div>
+                    
+                    <!-- Cancel Order Button -->
+                    {% if order.status in ['pending', 'pending_payment', 'waiting_admin_confirmation', 'confirmed'] %}
+                    <div class="d-grid mb-3">
+                        <button type="button" class="btn btn-outline-danger" onclick="showCancelModal()">
+                            <i class="bi bi-x-circle"></i> Hủy đơn hàng
+                        </button>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Bank Transfer Confirmation Button -->
+                    {% if order.payment_method == 'MOCK_TRANSFER' and order.status == 'pending_payment' and not order.transfer_confirmed %}
+                    <div class="d-grid mb-3">
+                        <button type="button" class="btn btn-success" onclick="confirmBankTransfer()">
+                            <i class="bi bi-credit-card"></i> Tôi đã chuyển khoản
+                        </button>
+                    </div>
+                    <div class="alert alert-info">
+                        <small>
+                            <i class="bi bi-info-circle"></i>
+                            Vui lòng chuyển khoản theo thông tin sau và xác nhận để hoàn tất đặt hàng.
+                        </small>
+                        <hr class="my-2">
+                        <div style="font-size: 0.85rem;">
+                            <p class="mb-1"><strong>STK:</strong> 0123456789</p>
+                            <p class="mb-1"><strong>Ngân hàng:</strong> Vietcombank</p>
+                            <p class="mb-1"><strong>Chủ TK:</strong> NHÀ SÁCH GANG THÉP</p>
+                            <p class="mb-0"><strong>Nội dung:</strong> {{ order.order_code }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Order Completion Button -->
+                    {% if order.status == 'delivered' %}
+                    <div class="d-grid mb-3">
+                        <button type="button" class="btn btn-primary" onclick="confirmReceipt()">
+                            <i class="bi bi-check-circle"></i> Đã nhận đơn hàng
+                        </button>
+                    </div>
+                    <div class="alert alert-success">
+                        <small>
+                            <i class="bi bi-info-circle"></i>
+                            Đơn hàng đã được giao đến bạn. Vui lòng xác nhận đã nhận hàng để hoàn tất đơn hàng.
+                        </small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Support Info -->
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h6><i class="bi bi-headset"></i> Hỗ trợ khách hàng</h6>
+                    <p class="mb-1">Hotline: 1900-SACH</p>
+                    <p class="mb-0">Email: support@nhasachgangthep.com</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cancel Order Modal -->
+<div class="modal fade" id="cancelOrderModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Hủy đơn hàng</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('site.cancel_order_view', order_code=order.order_code) }}">
+                <div class="modal-body">
+                    <p>Bạn có chắc chắn muốn hủy đơn hàng <strong>#{{ order.order_code }}</strong> không?</p>
+                    <div class="mb-3">
+                        <label for="cancelNote" class="form-label">Lý do hủy (tùy chọn):</label>
+                        <textarea class="form-control" id="cancelNote" name="note" rows="3" 
+                                  placeholder="Nhập lý do hủy đơn hàng..."></textarea>
+                    </div>
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>Lưu ý:</strong> Sau khi hủy, đơn hàng sẽ không thể khôi phục và số lượng sản phẩm sẽ được hoàn lại kho.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-danger">Xác nhận hủy</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showCancelModal() {
+    const modal = new bootstrap.Modal(document.getElementById('cancelOrderModal'));
+    modal.show();
+}
+
+function confirmBankTransfer() {
+    if (confirm('Xác nhận rằng bạn đã chuyển khoản theo thông tin trên?')) {
+        fetch(`/orders/{{ order.order_code }}/confirm-transfer`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token() }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert('Lỗi: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Có lỗi xảy ra: ' + error.message);
+        });
+    }
+}
+
+function confirmReceipt() {
+    if (confirm('Xác nhận rằng bạn đã nhận được đơn hàng?')) {
+        fetch(`/orders/{{ order.order_code }}/complete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token() }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert('Lỗi: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Có lỗi xảy ra: ' + error.message);
+        });
+    }
+}
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.timeline-item {
+    position: relative;
+}
+
+.timeline-marker {
+    min-width: 20px;
+}
+
+.timeline-content {
+    flex: 1;
+}
+
+.timeline-item:not(:last-child) .timeline-content::after {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 30px;
+    bottom: -20px;
+    width: 2px;
+    background-color: #dee2e6;
+}
+</style>
+{% endblock %}

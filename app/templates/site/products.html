@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+
+{% block title %}{% if selected_category %}{{ selected_category.name }} - Nhà sách Gang Thép{% else %}Sách - Nhà sách Gang Thép{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('site.home') }}">Trang chủ</a></li>
+            {% if selected_category %}
+            <li class="breadcrumb-item active">{{ selected_category.name }}</li>
+            {% else %}
+            <li class="breadcrumb-item active">Sách</li>
+            {% endif %}
+        </ol>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            {% if selected_category %}
+            <h1>{{ selected_category.name }}</h1>
+            {% if selected_category.intro %}
+            <p class="category-description">{{ selected_category.intro }}</p>
+            {% endif %}
+            {% else %}
+            <h1>Tất cả sách</h1>
+            {% endif %}
+            <p class="text-muted">{{ total }} sách</p>
+        </div>
+    </div>
+
+    <!-- Filters & Search -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="GET" class="row g-3">
+                        <!-- Search -->
+                        <div class="col-md-3">
+                            <label class="form-label">Tìm kiếm</label>
+                            <input type="text" class="form-control" name="q" value="{{ q }}" 
+                                   placeholder="Nhập tên sách, tác giả...">
+                        </div>
+                        
+                        <!-- Category filter -->
+                        <div class="col-md-3">
+                            <label class="form-label">Danh mục</label>
+                            <select name="category" class="form-select">
+                                <option value="">Tất cả danh mục</option>
+                                {% for category in categories %}
+                                <option value="{{ category.id }}" {% if category_id == category.id %}selected{% endif %}>
+                                    {{ category.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <!-- Price filters -->
+                        <div class="col-md-2">
+                            <label class="form-label">Giá từ</label>
+                            <input type="number" class="form-control" name="price_min" value="{{ price_min }}" 
+                                   placeholder="0">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Giá đến</label>
+                            <input type="number" class="form-control" name="price_max" value="{{ price_max }}" 
+                                   placeholder="999,999">
+                        </div>
+                        
+                        <!-- Sort -->
+                        <div class="col-md-2">
+                            <label class="form-label">Sắp xếp</label>
+                            <select name="sort" class="form-select">
+                                <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Mới nhất</option>
+                                <option value="oldest" {% if sort == 'oldest' %}selected{% endif %}>Cũ nhất</option>
+                                <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Giá tăng dần</option>
+                                <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Giá giảm dần</option>
+                                <option value="name_asc" {% if sort == 'name_asc' %}selected{% endif %}>Tên A-Z</option>
+                                <option value="name_desc" {% if sort == 'name_desc' %}selected{% endif %}>Tên Z-A</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="bi bi-search"></i> Tìm kiếm
+                            </button>
+                            <a href="{{ url_for('site.products') }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-clockwise"></i> Đặt lại
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Filters -->
+    {% if q or category_id or price_min or price_max %}
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="d-flex flex-wrap gap-2 align-items-center">
+                <span class="text-muted">Bộ lọc đang áp dụng:</span>
+                
+                {% if q %}
+                <span class="badge bg-primary">
+                    Tìm kiếm: "{{ q }}"
+                    <a href="{{ url_for('site.products', category=category_id, price_min=price_min, price_max=price_max, sort=sort) }}" 
+                       class="text-white ms-1">×</a>
+                </span>
+                {% endif %}
+                
+                {% if selected_category %}
+                <span class="badge bg-info">
+                    Danh mục: {{ selected_category.name }}
+                    <a href="{{ url_for('site.products', q=q, price_min=price_min, price_max=price_max, sort=sort) }}" 
+                       class="text-white ms-1">×</a>
+                </span>
+                {% endif %}
+                
+                {% if price_min %}
+                <span class="badge bg-warning">
+                    Giá từ: {{ "{:,}".format(price_min) }}đ
+                    <a href="{{ url_for('site.products', q=q, category=category_id, price_max=price_max, sort=sort) }}" 
+                       class="text-white ms-1">×</a>
+                </span>
+                {% endif %}
+                
+                {% if price_max %}
+                <span class="badge bg-warning">
+                    Giá đến: {{ "{:,}".format(price_max) }}đ
+                    <a href="{{ url_for('site.products', q=q, category=category_id, price_min=price_min, sort=sort) }}" 
+                       class="text-white ms-1">×</a>
+                </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Products Grid -->
+    <div class="row">
+        {% for product in items %}
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            {% include '_partials/product_card.html' %}
+        </div>
+        {% else %}
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                <h4>Không tìm thấy sản phẩm</h4>
+                <p>Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm</p>
+                <a href="{{ url_for('site.products') }}" class="btn btn-primary">
+                    Xem tất cả sản phẩm
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if items %}
+        {% include '_partials/pagination.html' %}
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Add to cart functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const addToCartBtns = document.querySelectorAll('.add-to-cart-btn');
+    
+    addToCartBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const productId = this.dataset.productId;
+            
+            fetch('/cart/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    product_id: productId,
+                    qty: 1
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update cart count in navbar
+                    const cartBadge = document.querySelector('.navbar .badge');
+                    if (cartBadge) {
+                        cartBadge.textContent = data.cart_count;
+                    } else if (data.cart_count > 0) {
+                        const cartLink = document.querySelector('.navbar a[href*="cart"]');
+                        cartLink.innerHTML += ` <span class="badge bg-danger">${data.cart_count}</span>`;
+                    }
+                    
+                    // Show success message
+                    alert(data.message);
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Có lỗi xảy ra');
+            });
+        });
+    });
+
+    // Quick filter buttons
+    const quickFilters = document.querySelectorAll('.quick-filter');
+    quickFilters.forEach(filter => {
+        filter.addEventListener('click', function() {
+            const category = this.dataset.category;
+            const url = new URL(window.location);
+            url.searchParams.set('category', category);
+            url.searchParams.delete('page');
+            window.location.href = url.toString();
+        });
+    });
+});
+</script>
+{% endblock %}

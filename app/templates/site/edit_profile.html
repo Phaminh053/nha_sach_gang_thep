@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}Chỉnh sửa thông tin - Nhà sách Gang Thép{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0">
+                        <i class="bi bi-pencil-square"></i> Chỉnh sửa thông tin cá nhân
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- Avatar Section -->
+                    <div class="row mb-4">
+                        <div class="col-12 text-center">
+                            <i class="{{ user|avatar_icon }} mb-3" style="font-size: 6.25rem; color: #6c757d;"></i>
+                        </div>
+                    </div>
+
+                    <!-- Form -->
+                    <form method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="full_name" class="form-label">
+                                    <i class="bi bi-person"></i> Họ và tên
+                                </label>
+                                <input type="text" class="form-control" id="full_name" name="full_name" 
+                                       value="{{ user.full_name or '' }}" placeholder="Nhập họ và tên của bạn">
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">
+                                    <i class="bi bi-envelope"></i> Email
+                                </label>
+                                <input type="email" class="form-control" id="email" name="email" 
+                                       value="{{ user.email or '' }}" placeholder="Nhập địa chỉ email">
+                                <div class="form-text">Email phải là duy nhất và hợp lệ</div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="phone" class="form-label">
+                                    <i class="bi bi-telephone"></i> Số điện thoại
+                                </label>
+                                <input type="tel" class="form-control" id="phone" name="phone" 
+                                       value="{{ user.phone or '' }}" placeholder="Nhập số điện thoại">
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">
+                                    <i class="bi bi-person-badge"></i> Tên đăng nhập
+                                </label>
+                                <input type="text" class="form-control" value="{{ user.username }}" readonly>
+                                <div class="form-text">Tên đăng nhập không thể thay đổi</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Account Info (Read-only) -->
+                        <div class="alert alert-info">
+                            <h6><i class="bi bi-info-circle"></i> Thông tin tài khoản</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <small><strong>Ngày tham gia:</strong><br>
+                                        {{ user.created_at.strftime('%d/%m/%Y') if user.created_at else 'N/A' }}
+                                    </small>
+                                </div>
+                                <div class="col-md-6">
+                                    <small><strong>Lần đăng nhập cuối:</strong><br>
+                                        {{ user.last_login_at.strftime('%d/%m/%Y %H:%M') if user.last_login_at else 'Chưa có' }}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('site.profile') }}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Quay lại
+                            </a>
+                            <div>
+                                <a href="{{ url_for('site.change_password') }}" class="btn btn-outline-warning me-2">
+                                    <i class="bi bi-key"></i> Đổi mật khẩu
+                                </a>
+                                <button type="reset" class="btn btn-outline-secondary me-2">
+                                    <i class="bi bi-arrow-clockwise"></i> Khôi phục
+                                </button>
+                                <button type="submit" class="btn btn-warning">
+                                    <i class="bi bi-check-lg"></i> Lưu thay đổi
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    // Form validation
+    $('form').on('submit', function(e) {
+        const email = $('#email').val().trim();
+        
+        // Validate email format if provided
+        if (email && email.length > 0) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                e.preventDefault();
+                alert('Vui lòng nhập địa chỉ email hợp lệ');
+                $('#email').focus();
+                return false;
+            }
+        }
+    });
+    
+    // Real-time email validation
+    $('#email').on('input', function() {
+        const email = $(this).val().trim();
+        if (email.length > 0) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                $(this).addClass('is-invalid');
+                if (!$(this).next('.invalid-feedback').length) {
+                    $(this).after('<div class="invalid-feedback">Định dạng email không hợp lệ</div>');
+                }
+            } else {
+                $(this).removeClass('is-invalid');
+                $(this).next('.invalid-feedback').remove();
+            }
+        } else {
+            $(this).removeClass('is-invalid');
+            $(this).next('.invalid-feedback').remove();
+        }
+    });
+    
+    // Phone number formatting (basic)
+    $('#phone').on('input', function() {
+        let phone = $(this).val().replace(/\D/g, ''); // Remove non-digits
+        if (phone.length > 0) {
+            // Basic Vietnamese phone validation
+            if (phone.length < 10 || phone.length > 11) {
+                $(this).addClass('is-invalid');
+                if (!$(this).next('.invalid-feedback').length) {
+                    $(this).after('<div class="invalid-feedback">Số điện thoại phải có 10-11 chữ số</div>');
+                }
+            } else {
+                $(this).removeClass('is-invalid');
+                $(this).next('.invalid-feedback').remove();
+            }
+        } else {
+            $(this).removeClass('is-invalid');
+            $(this).next('.invalid-feedback').remove();
+        }
+    });
+});
+</script>
+{% endblock %}

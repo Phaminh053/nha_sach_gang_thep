@@ -1,0 +1,450 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Quản lý khuyến mãi sản phẩm{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-header">
+                <h1>Quản lý khuyến mãi sản phẩm</h1>
+                <p class="text-muted">Thiết lập và quản lý giá khuyến mãi cho từng sản phẩm</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form id="filterForm" method="GET">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label class="form-label">Tìm kiếm</label>
+                                <input type="text" class="form-control" name="search" value="{{ search }}" 
+                                       placeholder="Tên sản phẩm...">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Danh mục</label>
+                                <select class="form-select" name="category_id">
+                                    <option value="">Tất cả danh mục</option>
+                                    {% for category in categories %}
+                                    <option value="{{ category.id }}" 
+                                        {% if category_id == category.id|string %}selected{% endif %}>
+                                        {{ category.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Trạng thái khuyến mãi</label>
+                                <select class="form-select" name="sale_status">
+                                    <option value="">Tất cả</option>
+                                    <option value="on_sale" {% if sale_status == 'on_sale' %}selected{% endif %}>
+                                        Đang khuyến mãi
+                                    </option>
+                                    <option value="not_on_sale" {% if sale_status == 'not_on_sale' %}selected{% endif %}>
+                                        Không khuyến mãi
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">&nbsp;</label>
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-search"></i> Lọc
+                                    </button>
+                                    <a href="{{ url_for('admin.product_sales') }}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-undo"></i> Reset
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Actions -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div id="bulkActions" class="d-none">
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-outline-success" onclick="bulkAction('activate_sale')">
+                            <i class="fas fa-check"></i> Kích hoạt khuyến mãi
+                        </button>
+                        <button type="button" class="btn btn-outline-warning" onclick="bulkAction('deactivate_sale')">
+                            <i class="fas fa-pause"></i> Tạm dừng khuyến mãi
+                        </button>
+                        <button type="button" class="btn btn-outline-danger" onclick="bulkAction('remove_sale')">
+                            <i class="fas fa-times"></i> Xóa khuyến mãi
+                        </button>
+                    </div>
+                </div>
+                <div class="text-muted">
+                    Tổng cộng: {{ total }} sản phẩm
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Products Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th width="50">
+                                    <input type="checkbox" id="selectAll" class="form-check-input">
+                                </th>
+                                <th>Sản phẩm</th>
+                                <th width="120">Giá gốc</th>
+                                <th width="120">Giá KM</th>
+                                <th width="100">% Giảm</th>
+                                <th width="150">Thời gian KM</th>
+                                <th width="100">Trạng thái</th>
+                                <th width="200">Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in products %}
+                            <tr>
+                                <td>
+                                    <input type="checkbox" class="form-check-input product-checkbox" 
+                                           value="{{ product.id }}">
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        {% if product.image_url %}
+                                        <img src="{{ product.image_url }}" alt="{{ product.name }}" 
+                                             class="me-2" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
+                                        {% endif %}
+                                        <div>
+                                            <div class="fw-bold">{{ product.name }}</div>
+                                            <small class="text-muted">ID: {{ product.id }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <strong>{{ "{:,.0f}".format(product.price) }}₫</strong>
+                                </td>
+                                <td>
+                                    {% if product.sale_price %}
+                                        <span class="text-danger fw-bold">
+                                            {{ "{:,.0f}".format(product.sale_price) }}₫
+                                        </span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if product.sale_price %}
+                                        {% set discount_percent = ((product.price - product.sale_price) / product.price * 100)|round %}
+                                        <span class="badge bg-danger">-{{ discount_percent }}%</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if product.sale_start and product.sale_end %}
+                                        <small>
+                                            {{ product.sale_start[:10] }}<br>
+                                            đến {{ product.sale_end[:10] }}
+                                        </small>
+                                    {% elif product.sale_start %}
+                                        <small>Từ {{ product.sale_start[:10] }}</small>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if product.sale_active and product.sale_price %}
+                                        <span class="badge bg-success">Đang KM</span>
+                                    {% elif product.sale_price %}
+                                        <span class="badge bg-warning">Tạm dừng</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Chưa KM</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        {% if product.sale_price %}
+                                            <button type="button" class="btn btn-outline-primary" 
+                                                    onclick="editSale({{ product.id }})">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-outline-danger" 
+                                                    onclick="removeSale({{ product.id }})">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        {% else %}
+                                            <button type="button" class="btn btn-outline-success" 
+                                                    onclick="setSale({{ product.id }})">
+                                                <i class="fas fa-plus"></i> Thiết lập KM
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if total > per_page %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <nav>
+                <ul class="pagination justify-content-center">
+                    {% set total_pages = (total / per_page)|round(0, 'ceil')|int %}
+                    {% for page_num in range(1, total_pages + 1) %}
+                        {% if page_num == page %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                        {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('admin.product_sales', page=page_num, search=search, category_id=category_id, sale_status=sale_status) }}">
+                                    {{ page_num }}
+                                </a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Set Sale Modal -->
+<div class="modal fade" id="saleModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Thiết lập khuyến mãi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="saleForm">
+                    <input type="hidden" id="productId">
+                    <div class="mb-3">
+                        <label for="productName" class="form-label">Sản phẩm</label>
+                        <input type="text" class="form-control" id="productName" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="originalPrice" class="form-label">Giá gốc</label>
+                        <input type="text" class="form-control" id="originalPrice" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="salePrice" class="form-label">Giá khuyến mãi <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" id="salePrice" required min="1">
+                        <div class="form-text">Giá khuyến mãi phải nhỏ hơn giá gốc</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="saleStart" class="form-label">Ngày bắt đầu</label>
+                        <input type="datetime-local" class="form-control" id="saleStart">
+                    </div>
+                    <div class="mb-3">
+                        <label for="saleEnd" class="form-label">Ngày kết thúc</label>
+                        <input type="datetime-local" class="form-control" id="saleEnd">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" onclick="saveSale()">Lưu khuyến mãi</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Global variables
+let products = {{ products|tojson }};
+
+// Checkbox handling
+document.getElementById('selectAll').addEventListener('change', function() {
+    const checkboxes = document.querySelectorAll('.product-checkbox');
+    checkboxes.forEach(cb => cb.checked = this.checked);
+    toggleBulkActions();
+});
+
+document.querySelectorAll('.product-checkbox').forEach(cb => {
+    cb.addEventListener('change', toggleBulkActions);
+});
+
+function toggleBulkActions() {
+    const checkedBoxes = document.querySelectorAll('.product-checkbox:checked');
+    const bulkActions = document.getElementById('bulkActions');
+    
+    if (checkedBoxes.length > 0) {
+        bulkActions.classList.remove('d-none');
+    } else {
+        bulkActions.classList.add('d-none');
+    }
+}
+
+// Sale management functions
+function setSale(productId) {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+    
+    document.getElementById('productId').value = productId;
+    document.getElementById('productName').value = product.name;
+    document.getElementById('originalPrice').value = new Intl.NumberFormat('vi-VN').format(product.price) + '₫';
+    document.getElementById('salePrice').value = '';
+    document.getElementById('saleStart').value = '';
+    document.getElementById('saleEnd').value = '';
+    
+    new bootstrap.Modal(document.getElementById('saleModal')).show();
+}
+
+function editSale(productId) {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+    
+    document.getElementById('productId').value = productId;
+    document.getElementById('productName').value = product.name;
+    document.getElementById('originalPrice').value = new Intl.NumberFormat('vi-VN').format(product.price) + '₫';
+    document.getElementById('salePrice').value = product.sale_price || '';
+    
+    // Convert datetime to local format
+    if (product.sale_start) {
+        const startDate = new Date(product.sale_start);
+        document.getElementById('saleStart').value = startDate.toISOString().slice(0, 16);
+    }
+    if (product.sale_end) {
+        const endDate = new Date(product.sale_end);
+        document.getElementById('saleEnd').value = endDate.toISOString().slice(0, 16);
+    }
+    
+    new bootstrap.Modal(document.getElementById('saleModal')).show();
+}
+
+function saveSale() {
+    const productId = document.getElementById('productId').value;
+    const salePrice = document.getElementById('salePrice').value;
+    const saleStart = document.getElementById('saleStart').value;
+    const saleEnd = document.getElementById('saleEnd').value;
+    
+    if (!salePrice || parseFloat(salePrice) <= 0) {
+        alert('Vui lòng nhập giá khuyến mãi hợp lệ');
+        return;
+    }
+    
+    const data = {
+        sale_price: parseFloat(salePrice),
+        sale_start: saleStart ? new Date(saleStart).toISOString() : null,
+        sale_end: saleEnd ? new Date(saleEnd).toISOString() : null
+    };
+    
+    fetch(`/admin/product-sales/${productId}/set-sale`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            bootstrap.Modal.getInstance(document.getElementById('saleModal')).hide();
+            location.reload();
+        } else {
+            alert(result.message || 'Có lỗi xảy ra');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Có lỗi xảy ra');
+    });
+}
+
+function removeSale(productId) {
+    if (!confirm('Bạn có chắc muốn xóa khuyến mãi cho sản phẩm này?')) {
+        return;
+    }
+    
+    fetch(`/admin/product-sales/${productId}/remove-sale`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            location.reload();
+        } else {
+            alert(result.message || 'Có lỗi xảy ra');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Có lỗi xảy ra');
+    });
+}
+
+// Bulk actions
+function bulkAction(action) {
+    const checkedBoxes = document.querySelectorAll('.product-checkbox:checked');
+    const productIds = Array.from(checkedBoxes).map(cb => parseInt(cb.value));
+    
+    if (productIds.length === 0) {
+        alert('Vui lòng chọn ít nhất một sản phẩm');
+        return;
+    }
+    
+    let confirmMessage = '';
+    switch (action) {
+        case 'remove_sale':
+            confirmMessage = `Bạn có chắc muốn xóa khuyến mãi cho ${productIds.length} sản phẩm đã chọn?`;
+            break;
+        case 'activate_sale':
+            confirmMessage = `Bạn có chắc muốn kích hoạt khuyến mãi cho ${productIds.length} sản phẩm đã chọn?`;
+            break;
+        case 'deactivate_sale':
+            confirmMessage = `Bạn có chắc muốn tạm dừng khuyến mãi cho ${productIds.length} sản phẩm đã chọn?`;
+            break;
+    }
+    
+    if (!confirm(confirmMessage)) {
+        return;
+    }
+    
+    fetch('/admin/product-sales/bulk-actions', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            product_ids: productIds,
+            action: action
+        })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            location.reload();
+        } else {
+            alert(result.message || 'Có lỗi xảy ra');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Có lỗi xảy ra');
+    });
+}
+</script>
+
+{% endblock %}

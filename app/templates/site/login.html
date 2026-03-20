@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Đăng nhập - Nhà sách Gang Thép{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-4">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h3 class="card-title text-center mb-4">
+                        <i class="bi bi-person-check"></i> Đăng nhập
+                    </h3>
+                    
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            {{ form.username.label(class="form-label") }}
+                            {{ form.username(class="form-control" + (" is-invalid" if form.username.errors else "")) }}
+                            {% if form.username.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.username.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.password.label(class="form-label") }}
+                            {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else "")) }}
+                            {% if form.password.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.password.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            {{ form.remember_me(class="form-check-input") }}
+                            {{ form.remember_me.label(class="form-check-label") }}
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-box-arrow-in-right"></i> Đăng nhập
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="text-center">
+                        <p class="mb-0">Chưa có tài khoản?</p>
+                        <a href="{{ url_for('site.register') }}" class="btn btn-outline-success">
+                            <i class="bi bi-person-plus"></i> Đăng ký ngay
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // If we see a success message, it means login was successful
+    const flashMessages = document.querySelectorAll('.alert-success');
+    if (flashMessages.length > 0) {
+        // User just logged in successfully, trigger event
+        setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('userLogin', { 
+                detail: { 
+                    user: { 
+                        id: '{{ session.user_id }}',
+                        name: '{{ session.user_name }}'
+                    } 
+                } 
+            }));
+        }, 100);
+    }
+});
+</script>
+{% endblock %}

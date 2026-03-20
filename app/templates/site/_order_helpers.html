@@ -1,0 +1,83 @@
+{# Macro for user order status display #}
+
+{% macro render_user_order_status(order) %}
+    {% if order.status == 'cancelled' %}
+        <span class="badge bg-danger">Đã hủy</span>
+    {% elif order.status == 'pending' %}
+        <span class="badge bg-warning text-dark">Đang chờ xử lý</span>
+    {% elif order.status == 'waiting_admin_confirmation' %}
+        <span class="badge bg-warning text-dark">Chờ xác nhận</span>
+    {% elif order.status == 'confirmed' %}
+        <span class="badge bg-info">Đã xác nhận</span>
+    {% elif order.status == 'fulfilled' %}
+        {# Đơn hàng đang được giao, chờ khách hàng xác nhận #}
+        <span class="badge bg-primary">Đang giao hàng</span>
+    {% elif order.status == 'completed' %}
+        {# Khách hàng đã xác nhận nhận hàng #}
+        <span class="badge bg-success">Đã giao hàng</span>
+    {% else %}
+        <span class="badge bg-secondary">{{ order.status }}</span>
+    {% endif %}
+{% endmacro %}
+
+{% macro render_user_payment_status(order) %}
+    {% if order.payment_status in ['paid', 'mock_paid'] %}
+        <span class="badge bg-success">Đã thanh toán</span>
+    {% elif order.payment_method == 'MOCK_TRANSFER' and order.transfer_confirmed %}
+        <span class="badge bg-success">Đã thanh toán</span>
+    {% elif order.payment_method == 'MOCK_TRANSFER' and not order.transfer_confirmed %}
+        <span class="badge bg-warning text-dark">Chờ xác nhận chuyển khoản</span>
+    {% elif order.payment_method == 'COD' %}
+        <span class="badge bg-warning text-dark">Thanh toán khi nhận hàng</span>
+    {% else %}
+        <span class="badge bg-danger">Chưa thanh toán</span>
+    {% endif %}
+{% endmacro %}
+
+{% macro render_user_payment_method(order) %}
+    {% if order.payment_method == 'COD' %}
+        <span class="badge bg-warning text-dark">Thanh toán khi nhận hàng</span>
+    {% elif order.payment_method == 'MOMO' %}
+        <span class="badge bg-danger">Ví MoMo</span>
+    {% elif order.payment_method == 'VNPAY' %}
+        <span class="badge bg-primary">VNPay</span>
+    {% elif order.payment_method == 'MOCK_TRANSFER' %}
+        <span class="badge bg-info">Chuyển khoản ngân hàng</span>
+    {% else %}
+        <span class="badge bg-secondary">{{ order.payment_method }}</span>
+    {% endif %}
+{% endmacro %}
+
+{% macro render_user_actions(order) %}
+    <div class="btn-group-vertical d-grid gap-1">
+        <a href="{{ url_for('site.order_detail', order_code=order.order_code) }}" 
+           class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-eye"></i> Xem chi tiết
+        </a>
+        
+        {# User can cancel pending, waiting_admin_confirmation or confirmed orders #}
+        {% if order.status in ['pending', 'pending_payment', 'waiting_admin_confirmation', 'confirmed'] %}
+            <button type="button" class="btn btn-outline-danger btn-sm" 
+                    onclick="showCancelModal('{{ order.order_code }}')">
+                <i class="bi bi-x-circle"></i> Hủy đơn hàng
+            </button>
+        {% endif %}
+        
+        {# User can pay for unpaid transfer orders #}
+        {% if order.payment_method == 'MOCK_TRANSFER' and not order.transfer_confirmed and order.status != 'cancelled' %}
+            <a href="{{ url_for('site.mock_pay', order_code=order.order_code) }}" 
+               class="btn btn-outline-success btn-sm"
+               onclick="return confirm('Xác nhận thanh toán đơn hàng này?')">
+                <i class="bi bi-credit-card"></i> Thanh toán
+            </a>
+        {% endif %}
+        
+        {# User can confirm receipt for orders being delivered #}
+        {% if order.status == 'fulfilled' %}
+            <button type="button" class="btn btn-outline-success btn-sm" 
+                    onclick="confirmReceived('{{ order.order_code }}')">
+                <i class="bi bi-check-circle"></i> Đã nhận hàng
+            </button>
+        {% endif %}
+    </div>
+{% endmacro %}

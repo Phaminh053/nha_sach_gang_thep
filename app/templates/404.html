@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Không tìm thấy trang - Nhà sách Gang Thép{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 text-center">
+            <div class="error-page">
+                <h1 class="display-1 text-muted">404</h1>
+                <h2 class="mb-4">Oops! Không tìm thấy trang</h2>
+                <p class="lead text-muted mb-4">
+                    Trang bạn đang tìm kiếm có thể đã được di chuyển, xóa hoặc tạm thời không khả dụng.
+                </p>
+                <div class="mb-4">
+                    <a href="{{ url_for('site.home') }}" class="btn btn-primary me-2">
+                        <i class="fas fa-home"></i> Về trang chủ
+                    </a>
+                    <a href="{{ url_for('site.products') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-apple-alt"></i> Xem sản phẩm
+                    </a>
+                </div>
+                <div class="text-muted">
+                    <small>
+                        Hoặc bạn có thể <a href="{{ url_for('site.home') }}">quay lại trang chủ</a> 
+                        để tìm những gì bạn cần.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.error-page {
+    padding: 2rem 0;
+}
+
+.error-page h1 {
+    font-size: 8rem;
+    font-weight: 300;
+    color: #6c757d;
+    line-height: 1;
+}
+
+.error-page h2 {
+    color: #495057;
+    font-weight: 400;
+}
+
+@media (max-width: 576px) {
+    .error-page h1 {
+        font-size: 5rem;
+    }
+}
+</style>
+{% endblock %}

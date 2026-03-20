@@ -1,0 +1,22 @@
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var messages = [
+            {% for category, message in messages %}
+                {
+            type: {{ ("error" if category == "error" else "success" if category == "success" else "warning" if category == "warning" else "info")| tojson | safe }},
+    message: { { message | tojson | safe } }
+                }{% if not loop.last %}, {% endif %}
+    {% endfor %}
+            ];
+
+    messages.forEach(function (msg, index) {
+        setTimeout(function () {
+            showToast(msg.type, msg.message);
+        }, index * 200);
+    });
+        });
+</script>
+{% endif %}
+{% endwith %}

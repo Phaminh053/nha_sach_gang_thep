@@ -1,0 +1,200 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Chi tiết người dùng - {{ user.display_name }}{% endblock %}
+{% block page_title %}Chi tiết người dùng{% endblock %}
+{% block page_subtitle %}{{ user.display_name }} (@{{ user.username }}){% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-4">
+        <!-- User Profile Card -->
+        <div class="card mb-4">
+            <div class="card-body text-center">
+                <!-- Avatar with icon fallback -->
+                <div class="mb-3">
+                    <i class="{{ user|avatar_icon }}" style="font-size: 7.5rem; color: #6c757d;"></i>
+                </div>
+                
+                <h5 class="card-title">{{ user.display_name }}</h5>
+                <p class="text-muted">@{{ user.username }}</p>
+                
+                <!-- Roles -->
+                <div class="mb-3">
+                    <h6>Vai trò:</h6>
+                    {% for role in user.roles %}
+                        <span class="badge bg-primary me-1">{{ role.name }}</span>
+                    {% else %}
+                        <span class="badge bg-secondary">Chưa phân quyền</span>
+                    {% endfor %}
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('admin.edit_user', user_id=user.id) }}" class="btn btn-custom">
+                        <i class="fas fa-edit"></i> Chỉnh sửa thông tin
+                    </a>
+                    
+                    <a href="{{ url_for('admin.change_user_password', user_id=user.id) }}" class="btn btn-warning">
+                        <i class="fas fa-key"></i> Đổi mật khẩu
+                    </a>
+                    
+                    <a href="{{ url_for('admin.users') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Quay lại danh sách
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-8">
+        <!-- User Information -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle"></i> Thông tin chi tiết</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-sm-3">
+                        <h6 class="mb-0">Tên đăng nhập</h6>
+                    </div>
+                    <div class="col-sm-9 text-secondary">
+                        {{ user.username }}
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-sm-3">
+                        <h6 class="mb-0">Họ và tên</h6>
+                    </div>
+                    <div class="col-sm-9 text-secondary">
+                        {{ user.full_name or 'Chưa cập nhật' }}
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-sm-3">
+                        <h6 class="mb-0">Email</h6>
+                    </div>
+                    <div class="col-sm-9 text-secondary">
+                        {{ user.email or 'Chưa cập nhật' }}
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-sm-3">
+                        <h6 class="mb-0">Số điện thoại</h6>
+                    </div>
+                    <div class="col-sm-9 text-secondary">
+                        {{ user.phone or 'Chưa cập nhật' }}
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-sm-3">
+                        <h6 class="mb-0">Ngày tạo tài khoản</h6>
+                    </div>
+                    <div class="col-sm-9 text-secondary">
+                        {{ user.created_at.strftime('%d/%m/%Y %H:%M:%S') if user.created_at else 'N/A' }}
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-sm-3">
+                        <h6 class="mb-0">Lần đăng nhập cuối</h6>
+                    </div>
+                    <div class="col-sm-9 text-secondary">
+                        {% if user.last_login_at %}
+                            {{ user.last_login_at.strftime('%d/%m/%Y %H:%M:%S') }}
+                        {% else %}
+                            <span class="text-muted">Chưa đăng nhập lần nào</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Orders -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-shopping-cart"></i> Đơn hàng gần đây</h5>
+            </div>
+            <div class="card-body">
+                {% if orders %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Mã đơn hàng</th>
+                                <th>Ngày đặt</th>
+                                <th>Trạng thái</th>
+                                <th>Tổng tiền</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in orders %}
+                            <tr>
+                                <td>#{{ order.id }}</td>
+                                <td>{{ order.created_at.strftime('%d/%m/%Y') if order.created_at else 'N/A' }}</td>
+                                <td>
+                                    {% set status_colors = {
+                                        'pending': 'warning',
+                                        'waiting_admin_confirmation': 'warning',
+                                        'confirmed': 'info', 
+                                        'processing': 'primary',
+                                        'shipped': 'primary',
+                                        'delivered': 'success',
+                                        'completed': 'success',
+                                        'cancelled': 'danger',
+                                        'refunded': 'secondary'
+                                    } %}
+                                    {% set status_names = {
+                                        'pending': 'Chờ xác nhận',
+                                        'waiting_admin_confirmation': 'Chờ xác nhận',
+                                        'confirmed': 'Đã xác nhận',
+                                        'processing': 'Đang xử lý',
+                                        'shipped': 'Đã gửi hàng',
+                                        'fulfilled': 'Đang giao hàng',
+                                        'delivered': 'Đã giao hàng',
+                                        'completed': 'Đã giao hàng',
+                                        'cancelled': 'Đã hủy',
+                                        'refunded': 'Đã hoàn tiền'
+                                    } %}
+                                    <span class="badge bg-{{ status_colors.get(order.status, 'secondary') }}">
+                                        {{ status_names.get(order.status, order.status) }}
+                                    </span>
+                                </td>
+                                <td>{{ "{:,.0f}".format(order.grand_total) }} VNĐ</td>
+                                <td>
+                                    <a href="{{ url_for('admin.order_detail', order_id=order.id) }}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">Người dùng này chưa có đơn hàng nào</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast for notifications -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="statusToast" class="toast" role="alert">
+        <div class="toast-header">
+            <strong class="me-auto">Thông báo</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body"></div>
+    </div>
+</div>
+{% endblock %}

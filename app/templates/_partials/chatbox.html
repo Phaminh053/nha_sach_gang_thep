@@ -1,0 +1,51 @@
+<!-- Chatbox Component -->
+<!-- Include this partial in your base template or specific pages -->
+
+<!-- Chatbox CSS -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/chatbox.css') }}">
+
+<!-- Chatbox will be automatically initialized by the JavaScript -->
+
+<!-- Chatbox JavaScript -->
+<script src="{{ url_for('static', filename='js/chatbox.js') }}"></script>
+
+<!-- Optional: Custom initialization with specific options -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Customize chatbox options if needed
+    if (window.chatbox) {
+        window.chatbox.updateOptions({
+            welcomeMessage: 'Xin chào! Tôi là trợ lý ảo của Nhà sách Gang Thép. Hãy hỏi tôi về sách, đơn hàng, hoặc bất kỳ thông tin nào về cửa hàng!',
+            placeholder: 'Hỏi về sách, đơn hàng, giao hàng...',
+            // autoOpen: true  // Uncomment to auto-open on page load
+        });
+    }
+});
+</script>
+
+<!-- 
+Usage Examples:
+
+1. Auto-open chatbox on page load:
+<script>
+window.chatbox.openChat();
+</script>
+
+2. Send a quick message programmatically:
+<script>
+window.chatbox.sendQuickMessage('Tôi cần tư vấn sách cho bé 3 tuổi');
+</script>
+
+3. Clear chat history:
+<script>
+window.chatbox.clearHistory();
+</script>
+
+4. Open chatbox from a button:
+<button onclick="window.chatbox.openChat()">Hỗ trợ trực tuyến</button>
+
+5. Send predefined message from a button:
+<button onclick="window.chatbox.sendQuickMessage('Tôi muốn biết về chính sách đổi trả')">
+    Chính sách đổi trả
+</button>
+-->

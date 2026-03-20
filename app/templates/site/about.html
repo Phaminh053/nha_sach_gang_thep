@@ -1,0 +1,453 @@
+{% extends "base.html" %}
+
+{% block title %}Về chúng tôi - Nhà sách Gang Thép{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Hero Section -->
+    <div class="about-hero-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <div class="about-hero-content">
+                        <h1 class="about-hero-title">{{ data.title }}</h1>
+                        <p class="about-hero-subtitle">Đồng hành cùng sự phát triển của trẻ em Việt</p>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="about-hero-image">
+                        <img src="{{ data.sections.brand_story.image_url }}" alt="Nhà sách Gang Thép" class="img-fluid">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Brand Story Section -->
+        <div class="about-section mb-5">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <div class="about-content">
+                        <h2 class="about-section-title">{{ data.sections.brand_story.title }}</h2>
+                        <p class="about-text">{{ data.sections.brand_story.content }}</p>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="about-image">
+                        <img src="{{ data.sections.brand_story.image_url }}" alt="Câu chuyện thương hiệu" class="img-fluid">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Core Values Section -->
+        <div class="about-section mb-5">
+            <div class="row align-items-center">
+                <div class="col-lg-6 order-lg-2">
+                    <div class="about-content">
+                        <h2 class="about-section-title">{{ data.sections.core_values.title }}</h2>
+                        <ul class="about-list">
+                            {% for bullet in data.sections.core_values.bullets %}
+                            <li class="about-list-item">{{ bullet }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-lg-6 order-lg-1">
+                    <div class="about-image">
+                        <img src="{{ data.sections.core_values.image_url }}" alt="Giá trị cốt lõi" class="img-fluid">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mission Section -->
+        <div class="about-section mb-5">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <div class="about-content">
+                        <h2 class="about-section-title">{{ data.sections.mission.title }}</h2>
+                        <ul class="about-list">
+                            {% for bullet in data.sections.mission.bullets %}
+                            <li class="about-list-item">{{ bullet }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="about-image">
+                        <img src="{{ data.sections.mission.image_url }}" alt="Sứ mệnh" class="img-fluid">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vision Section -->
+        <div class="about-section mb-5">
+            <div class="row align-items-center">
+                <div class="col-lg-6 order-lg-2">
+                    <div class="about-content">
+                        <h2 class="about-section-title">{{ data.sections.vision.title }}</h2>
+                        <ul class="about-list">
+                            {% for bullet in data.sections.vision.bullets %}
+                            <li class="about-list-item">{{ bullet }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-lg-6 order-lg-1">
+                    <div class="about-image">
+                        <img src="{{ data.sections.vision.image_url }}" alt="Tầm nhìn" class="img-fluid">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Logo Meaning Section -->
+        <div class="about-section mb-5">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <div class="about-content">
+                        <h2 class="about-section-title">{{ data.sections.logo_meaning.title }}</h2>
+                        <p class="about-text">{{ data.sections.logo_meaning.content }}</p>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="about-image">
+                        <img src="{{ data.sections.logo_meaning.image_url }}" alt="Ý nghĩa logo" class="img-fluid">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Awards Section -->
+        <div class="awards-section mb-5">
+            <div class="section-header text-center mb-5">
+                <h2 class="section-title">Giải thưởng & Thành tựu</h2>
+                <p class="section-subtitle">Những giải thưởng và thành tựu đạt được trong suốt hành trình phát triển</p>
+            </div>
+            <div class="row">
+                {% for award in data.sections.awards %}
+                <div class="col-lg-6 col-md-6 mb-4">
+                    <div class="award-card">
+                        <div class="award-year">{{ award.year }}</div>
+                        <div class="award-content">
+                            <p class="award-text">{{ award.text }}</p>
+                        </div>
+                        <div class="award-image">
+                            <img src="{{ award.image_url }}" alt="Giải thưởng {{ award.year }}" class="img-fluid">
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Milestones Section -->
+        <div class="milestones-section mb-5">
+            <div class="section-header text-center mb-5">
+                <h2 class="section-title">Cột mốc phát triển</h2>
+                <p class="section-subtitle">Hành trình 18 năm xây dựng và phát triển thương hiệu</p>
+            </div>
+            <div class="timeline">
+                {% for milestone in data.sections.milestones %}
+                <div class="timeline-item">
+                    <div class="timeline-year">{{ milestone.year }}</div>
+                    <div class="timeline-content">
+                        <h4 class="timeline-title">{{ milestone.title }}</h4>
+                        <p class="timeline-text">{{ milestone.text }}</p>
+                        <div class="timeline-image">
+                            <img src="{{ milestone.image_url }}" alt="{{ milestone.title }}" class="img-fluid">
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* About Us Page Styles */
+.about-hero-section {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    padding: 80px 0;
+    margin-bottom: 50px;
+}
+
+.about-hero-title {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 1rem;
+}
+
+.about-hero-subtitle {
+    font-size: 1.25rem;
+    color: #6c757d;
+    margin-bottom: 2rem;
+}
+
+.about-hero-image img {
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.about-section {
+    padding: 60px 0;
+}
+
+.about-section:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+.about-section-title {
+    font-size: 2.5rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 2rem;
+}
+
+.about-text {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #495057;
+    margin-bottom: 1.5rem;
+}
+
+.about-list {
+    list-style: none;
+    padding: 0;
+}
+
+.about-list-item {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #495057;
+    margin-bottom: 1rem;
+    padding-left: 2rem;
+    position: relative;
+}
+
+.about-list-item:before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: #28a745;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+.about-image img {
+    border-radius: 10px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+/* Awards Section */
+.awards-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 80px 0;
+    margin: 50px 0;
+    border-radius: 20px;
+}
+
+.awards-section .section-title {
+    color: white;
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.awards-section .section-subtitle {
+    color: rgba(255,255,255,0.9);
+    font-size: 1.1rem;
+}
+
+.award-card {
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    border: 1px solid rgba(255,255,255,0.2);
+    transition: transform 0.3s ease;
+}
+
+.award-card:hover {
+    transform: translateY(-5px);
+}
+
+.award-year {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #ffd700;
+    margin-bottom: 1rem;
+}
+
+.award-text {
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+}
+
+.award-image img {
+    border-radius: 10px;
+    max-height: 200px;
+    object-fit: cover;
+    width: 100%;
+}
+
+/* Milestones Section */
+.milestones-section {
+    padding: 80px 0;
+}
+
+.section-title {
+    font-size: 2.5rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 1rem;
+}
+
+.section-subtitle {
+    font-size: 1.1rem;
+    color: #6c757d;
+    margin-bottom: 3rem;
+}
+
+.timeline {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.timeline:before {
+    content: '';
+    position: absolute;
+    left: 1rem;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(to bottom, #667eea, #764ba2);
+    border-radius: 2px;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 3rem;
+    padding-left: 3rem;
+}
+
+.timeline-item:before {
+    content: '';
+    position: absolute;
+    left: -0.5rem;
+    top: 0.5rem;
+    width: 1rem;
+    height: 1rem;
+    background: #667eea;
+    border-radius: 50%;
+    border: 3px solid white;
+    box-shadow: 0 0 0 3px #667eea;
+}
+
+.timeline-year {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #667eea;
+    margin-bottom: 0.5rem;
+}
+
+.timeline-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 1rem;
+}
+
+.timeline-text {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #495057;
+    margin-bottom: 1rem;
+}
+
+.timeline-image img {
+    border-radius: 10px;
+    max-height: 300px;
+    object-fit: cover;
+    width: 100%;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .about-hero-title {
+        font-size: 2rem;
+    }
+    
+    .about-section-title {
+        font-size: 2rem;
+    }
+    
+    .section-title {
+        font-size: 2rem;
+    }
+    
+    .timeline {
+        padding-left: 1rem;
+    }
+    
+    .timeline-item {
+        padding-left: 2rem;
+    }
+    
+    .timeline:before {
+        left: 0.5rem;
+    }
+    
+    .timeline-item:before {
+        left: -0.25rem;
+    }
+}
+
+/* Animation */
+.about-section, .award-card, .timeline-item {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.6s ease;
+}
+
+.about-section.animate, .award-card.animate, .timeline-item.animate {
+    opacity: 1;
+    transform: translateY(0);
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Scroll animations
+    const animateElements = document.querySelectorAll('.about-section, .award-card, .timeline-item');
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('animate');
+            }
+        });
+    }, {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    });
+    
+    animateElements.forEach(el => {
+        observer.observe(el);
+    });
+});
+</script>
+{% endblock %}
