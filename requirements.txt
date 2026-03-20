@@ -39,3 +39,4 @@ requests==2.31.0                  # For HTTP requests
 # celery==5.3.1                   # For background tasks
 # flask-caching==2.1.0            # For caching
 # pillow==10.0.0                  # For image processing
+pymysql==1.1.0
